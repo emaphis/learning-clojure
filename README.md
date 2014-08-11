@@ -3,7 +3,7 @@ learning-clojure
 
 Learning Clojure
 
-I'm working through the book "Learning Clojure" by Chas Emeric, and Brian Carper:
+I'm working through the book "Clojure Programming" by Chas Emeric, and Brian Carper:
 
 Learning Clojure book's [website](http://www.clojurebook.com/).
 Source code [website](https://github.com/clojurebook/ClojureProgramming/).

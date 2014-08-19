@@ -2,7 +2,8 @@
   (:require [midje.sweet :refer :all]))
 
 
-[[:section {:title "The Clojure REPL" :tag "page 3"}]]
+[[:section {:title "The Clojure REPL  -- page: 3"}]]
+
 
 "
 'defn' defines a new function named 'average' in the namespace.
@@ -12,10 +13,10 @@
   [numbers]
   (/ (apply + numbers) (count numbers)))
 
-(fact (average [60 80 100 400]) => 160)
+	(fact (average [60 80 100 400]) => 160)
 
 
-[[:section {:title "The Reader" :tag "page 12" }]]
+[[:section {:title "The Reader" :page 12}]]
 
 
 "
@@ -142,7 +143,7 @@ So:"
 (fact (= [1 2 3] [1, 2, 3]) => true)
 
 
-[[:subsection {:title "Collection Literals" :tag "page 19.5" }]]
+[[:subsection {:title "Collection Literals-- page: 19" }]]
 
 (facts
   (fact "the list '(...):"
@@ -156,7 +157,7 @@ So:"
 
 
 
-[[:subsection {:title "Miscellaneous Reader Sugar" :tag "page 20.a" }]]
+[[:subsection {:title "Miscellaneous Reader Sugar-- page: 20" }]]
 
 "
 Evaluation can be suppressed with the (') quote macro, this is equivalent 
@@ -180,7 +181,7 @@ derenfernce a var (@)
 ;;(fact @var1 => 10)
 
 
-[[:section {:title "Namespaces" :tag "page 20.b" }]]
+[[:section {:title "Namespaces-- page: 20" }]]
 
 "
 Namespaces are Clojures unit of code modularity.
@@ -215,7 +216,7 @@ the 'java.lang' namepace is imported by default into each Clojure namepace:
 "namespaces also alias the vars included in Clojures standard library 'clojure.core' so it may be used without qualifications"
 
 
-[[:section {:title "Symbol Evaluation" :tag "page 23" }]]
+[[:section {:title "Symbol Evaluation  -- page: 23"}]]
 
 "
 vars evaluate to there contents,
@@ -223,7 +224,7 @@ numbers, strings and other atomic values evaluate to themselves.
 "
 
 
-[[:section {:title "Special Forms" :tag "page 24.a" }]]
+[[:section {:title "Special Forms -- page: 24"}]]
 
 "
 Symbols in function call position can only eval to two different things:
@@ -235,7 +236,7 @@ things are build on top of special forms.
 Special forms have there own evaluation syntax
 "
 
-[[:subsection {:title "Suppressing Evaluation: quote" :tag "page 24.b" }]]
+[[:subsection {:title "Suppressing Evaluation: quote  -- page: 24"}]]
 
 (fact (quote x) => 'x)
 (fact (symbol? (quote x)) => truthy)
@@ -250,7 +251,7 @@ Special forms have there own evaluation syntax
 (fact ''x => '(quote x))
 
 
-[[:subsection {:title "Code Blocks: do" :tag "page 25" }]]
+[[:subsection {:title "Code Blocks: do  -- page: 25"}]]
 
 (fact "do evaluates all of it's expessions in order and yields the last"
   (do (println "hi")
@@ -277,7 +278,7 @@ such as:"
     (+ a b)))
 
 
-[[:subsection {:title "Defining Vars: def" :tag "page 26" }]]
+[[:subsection {:title "Defining Vars: def  --  page 26"}]]
 "
 def defines or redifines a var with an optional value in the 
 current namespace
@@ -293,7 +294,7 @@ therefore can create or redifine vars.
 "
 
 
-[[:subsection {:title "Local Bindings: let" :tag "page 27" }]]
+[[:subsection {:title "Local Bindings: let --  page 27"}]]
 "
 let binds locally scoped references, let defines locals
 "
@@ -316,7 +317,7 @@ All locals are immutable, but you can override local bindings.
 Let bindings provide destructuring at.
 "
 
-[[:subsection {:title "Destructuring - let" :tag "page 28" }]]
+[[:subsection {:title "Destructuring - let --  page 28"}]]
 "
 Most Clojure funtions are based around sequential and map data structures.
 This allows functions and data structures to be trivially composed.
@@ -390,7 +391,7 @@ Retaining the destructured value
   => '[42 "foo" 99.2 [5 12] 141.2])
 
 "
-Map destructuring 
+Map destructuring  -- page: 32
 similar to sequential destructuring.
 It works with hash-maps array-maps records, anything that implements
 java.util.Map, anything that is supported by 'get' vectors Strings Arrays
@@ -400,8 +401,238 @@ java.util.Map, anything that is supported by 'get' vectors Strings Arrays
         :c [7 8 9]
         :d {:e 10 :f 11}
         "foo" 88
-        42 false})
+         42 false})
 
 (fact (let [{a :a b :b} m]
         (+ a b))
   => 11)
+
+(facts "Keynames don't have to match"
+  (fact 
+    (let [{f "foo"} m]
+      (+ f 12))  => 100)
+  (fact
+    (let [{v 42} m]
+      (if v 1 0)) => 0))
+ 
+(fact "Matrix destructuring"
+  (let [{x 3, y 8} [12 0 0 -18 44 6 0 0 1]]
+    (+ x y)) => -17)
+
+(fact  "Map entries may also be composed:"
+  (let [{{e :e} :d} m]
+    (* 2 e)) => 20)
+
+(fact "Map and sequence destructuring:"
+  (let [{[x _ y] :c} m]
+    (+ x y)) => 16)
+
+
+;; TODO: mistake on page 32-33
+(def map-in-vector ["James" {:birthday (java.util.Date. 73 1 6)}])
+(fact "map in vector"
+  (let [[name {bd :birthday}] map-in-vector]
+    (str name " was born on " bd))
+  => "James was born on Tue Feb 06 00:00:00 EST 1973")
+
+
+"Retaining the destructured value
+ ':as retains the sourced collection"
+(let [{r1 :x r2 :y :as randoms}
+      (zipmap [:x :y :z] (repeatedly (partial rand-int 10)))]
+  (assoc randoms :sum (+ r1 r2)))
+"=> {:sum 17, :z 3, :y 8, :x 9}"
+
+" Use ':or' to provide default values for destructuring"
+(fact "default values:"
+  (let [{k :unknown x :a
+         :or {k 50}} m]
+    (+ k x))
+  => 55)
+
+"manually setting defualits is"
+(fact "more tiring:"
+  (let [{k :unknown x :a} m
+        k (or k 50)]
+    (+ k x))
+  => 55)
+
+(fact ":or knows the differnce between no value and 'false' value"
+  (let [{opt1 :option} {:option false}
+        opt1 (or opt1 true)
+        {opt2 :option :or {opt2 true}} {:option false}]
+    {:opt1 opt1 :opt2 opt2})
+  => {:opt1 true, :opt2 false})
+
+
+"Binding values to there key's names  page 34"
+
+(def chas {:name "Chas" :age 31 :location "Massachesetts"})
+
+(fact "binding values using the same names can get repetittive:"
+  (let [{name :name age :age location :location} chas]
+    (format "%s is %s years old and lives in %s." name age location))
+  => "Chas is 31 years old and lives in Massachesetts.")
+
+(fact "using the ':keys' option:"
+  (let [{:keys [name age location]} chas]
+    (format "%s is %s years old and lives in %s." name age location))
+  => "Chas is 31 years old and lives in Massachesetts.")
+
+"switch when we know we are using strings or symbols as keys"
+
+(def brian {"name" "Brian" "age" 31 "location" "British Columbia"})
+
+(fact "using the ':strs' option:"
+  (let [{:strs [name age location]} brian]
+    (format "%s is %s years old and lives in %s." name age location))
+  => "Brian is 31 years old and lives in British Columbia.")
+
+(def christophe {'name "Christophe" 'age 33 'location "Rhône-Alpes"})
+
+(fact "the ':syms option:"
+  (let [{:syms [name age location]} christophe]
+    (format "%s is %s years old and lives in %s." name age location))
+  => "Christophe is 33 years old and lives in Rhône-Alpes.")
+
+"Destructuring rest sequences s map key/value pairs  page: 35"
+
+(def user-info ["robert8990" 2011 :name "Bob" :city "Boston"])
+
+(fact "the manual approach is tolerable"
+  (let [[username account-year & extra-info] user-info
+        {:keys [name city]} (apply hash-map extra-info)]
+    (format "%s is in %s" name city))
+  => "Bob is in Boston")
+
+(fact "use map destructured of rest seqs"
+  (let [[username account-year & {:keys [name city]}] user-info]
+    (format "%s is in %s" name city))
+  => "Bob is in Boston")
+
+
+
+[[:subsection {:title "Creating Functions:fn -- page: 36"}]]
+
+"Functions are first class so Clojure can create annonymous 
+functions as a data type"
+
+(fn [x]
+  (+ 10 x))
+
+"The parameters are passed in a 'let' style vector that can be destructured
+ The body is inserted into an implicit 'do' form that can contain any
+ number of forms"
+
+(fact "arguments are matched to each name or destructuring form based on position"
+  ((fn [x] (+ 10 x)) 8)
+  => 18)
+
+(fact "these are equivalent:"
+  ((fn [x] (+ 10 x)) 8)
+  =>
+  (let [x 8]
+    (+ 10 x)))
+
+(fact "multiple arguments"
+  ((fn [x y z] (+ x y z)) 3 4 12)
+  => 19)
+
+(fact "is equivalent to this 'let' form:"
+  (let [x 3
+        y 4
+        z 12]
+    (+ x y z))
+  => 19)
+
+"multiple arities:   page 37"
+
+(def strange-adder (fn adder-self-reference
+                     ([x] (adder-self-reference x 1))
+                     ([x y] (+ x y))))
+
+(fact (strange-adder 10)
+  => 11)
+
+(fact (strange-adder 10 50)
+  => 60)
+
+"notice that the single arity version references it self so that it 
+ can call the two arity version to do its work."
+
+
+(fact "Mutally recursive funtions with letfn:"
+  (letfn [(odd? [n]
+            (even? (dec n)))
+          (even? [n]
+            (or (zero? n)
+                (odd? (dec n))))]
+    (odd? 11))
+  => true)
+
+
+"
+'defn' builds on 'fn'  page: 37"
+
+(fact "these are equivalent:"
+  (def strange-adder (fn strange-adder
+                       ([x] (strange-adder x 1))
+                       ))
+  =>
+  (defn strange-adder
+    ([x] (strange-adder x 1))
+    ([x y] (+ x y))))
+
+"single arity eliminates extra parantheses:"
+
+(fact "these are also equivalent:"
+  (def redundant-adder (fn redundant-adder
+                         [x y z]
+                         (+ x y z)))
+  =>
+  (defn redundant-adder
+    [x y z]
+    (+ x y z)))
+
+
+"
+Destructuring function arguments:   page: 38
+
+Variadic functions:  functions can gather additional arguments
+into a seq:
+"
+
+(defn concat-rest
+  "ignore first argument"
+  [x & rest]
+  (apply str (butlast rest)))
+
+(fact (concat-rest 0 1 2 3 4)
+  => "123")
+
+
+(defn make-user
+  [& [user-id]]
+  {:user-id (or user-id
+                (str (java.util.UUID/randomUUID)))})
+
+(make-user)
+;; => {:user-id "85a7db56-c7c2-4fc6-942d-bfc7ba6f840c"}=> {:user-id "85a7db56-c7c2-4fc6-942d-bfc7ba6f840c"}
+
+(fact (make-user "Bobby")
+  => {:user-id "Bobby"})
+
+
+"Keyword arguments"
+
+(defn  make-usr
+  [username & {:keys [email join-date]
+               :or {join-date (java.util.Date.)}}]
+  {:username username
+   :join-date join-date
+   :email email
+   ;; 2.592e9 -> one month in ms.
+   :exp-date (java.util.Date. (long (+ 2.592e9 (.getTime join-date))))})
+
+(make-usr "Bobby")
+;=> {:username "Bobby", :join-date #inst "2014-08-19T18:32:26.929-00:00", :email nil, :exp-date #inst "2014-09-18T18:32:26.929-00:00"}

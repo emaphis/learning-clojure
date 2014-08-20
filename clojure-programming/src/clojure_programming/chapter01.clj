@@ -2,7 +2,8 @@
   (:require [midje.sweet :refer :all]))
 
 
-[[:section {:title "The Clojure REPL" :tag "page 3"}]]
+[[:section {:title "The Clojure REPL  -- page: 3"}]]
+
 
 "
 'defn' defines a new function named 'average' in the namespace.
@@ -15,11 +16,11 @@
 (fact (average [60 80 100 400]) => 160)
 
 
-[[:section {:title "The Reader" :tag "page 12" }]]
+[[:section {:title "The Reader -- page: 12"}]]
 
 
 "
-The reader (read-string) returns a language AST of the string read
+ reader (read-string) returns a language AST of the string read
 "
 (facts "the reader 'read-str' converts strings into Clojure data structures"
   (fact (read-string "42") => 42)
@@ -31,10 +32,11 @@ strutures as strings
 "
 (facts "'pr-str' is the complement of 'read-str'"
   (fact (pr-str [1 2 3]) => "[1 2 3]")
-  (fact (read-string "[1 2 3]") => [1 2 3]))
+  (fact (read-string "[1 2 3]") => [1 2 3])
+  (fact (pr-str (read-string "[1 2 3]")) => "[1 2 3]"))
 
 
-[[:subsection {:title "scalars" :tag "page 13" }]]
+[[:subsection {:title "scalars --  page: 13"}]]
 
 (fact "Strings are Java strings delimited by \"\""
   "hello there" => "hello there"
@@ -46,12 +48,12 @@ are very handy" => "multiline strings\nare very handy")
 (fact "'nil' is nil or Java Null"
   (type nil) => nil)
 
-(fact "Characters literals ar dented by a backslash"
+(fact "Characters literals are indicated by a backslash"
   (class \c) => java.lang.Character)
 
 (facts "Unicode and octal representations use prefixes"
   (fact "\\u00ff"
-    \u00ff => \ÿ) 
+    \u00ff => \ÿ)
   (fact "\\o41"
     \o41 => \!))
 
@@ -82,14 +84,23 @@ a namespace alias '::aliea/kw'.
 (fact pizza
   => {:name "Ramunto's", :clojure-programming.chapter01/location "42.3734, -72.3365", :location "Claremont, NH"})
 
-(fact (:clojure-programming.chapter01/location pizza)
+(fact "namespace denoted by '/'"
+  (:clojure-programming.chapter01/location pizza)
   => "42.3734, -72.3365")
+
+(facts "namespaces and keywords"
+  (fact  (name :clojure-programming.chapter01/location)
+    => "location")
+  (fact (namespace :clojure-programming.chapter01/location)
+    => "clojure-programming.chapter01")
+  (fact (namespace :locations)
+    => nil))
 
 "
 
 symbols:
 
-'Symbols' are identifiers that evaluate to values that they name in the current name space.  
+'Symbols' are identifiers that evaluate to values that they name in the current name space.
 
 'average' was a symbol defined earlier:
 "
@@ -98,13 +109,16 @@ symbols:
 
 
 "
-
+page 17
 regualar expressions:
 Clojure treats strings prefixed with '#' as regualar expect literals.
 
 "
 (fact "class of regualar expression literal: "
   (class #"(p|h)ail") => java.util.regex.Pattern )
+
+(fact (re-seq #"(...) (...)" "foo bar")
+  => '(["foo bar" "foo" "bar"]))
 
 (fact "Clojure regexs do not need escaping backslashes "
   (re-seq #"(\d+)-(\d+)" "1-3")  => '(["1-3" "1" "3"]))
@@ -118,7 +132,7 @@ Two kinds of comments:
 Single line begin with a ';' character
 all text after the ';' are ignored until the end of the line
 
-Form level using the '#_' reader macro, This causes the reader to 
+Form level using the '#_' reader macro, This causes the reader to
 ignore the 'sexp' following the macro:
 "
 (fact
@@ -126,23 +140,27 @@ ignore the 'sexp' following the macro:
 
 
 
-[[:subsection {:title "Whitespaces and Commas" :tag "page 19" }]]
+[[:subsection {:title "Whitespaces and Commas" }]]
 "
+page: 18
 Commas are whitespace in Clojure.
 
 So:"
 (fact "these are equivalent"
-  (defn silly-adder [x,y]
+  (defn silly-adder
+    [x,y]
     (+, x, y))
   =>
-  (defn silly-adder [x y]
+  (defn silly-adder
+    [x y]
     (+ x y)))
 
 "And: "
-(fact (= [1 2 3] [1, 2, 3]) => true)
+(fact (= [1 2 3] [1, 2, 3])
+  => true)
 
 
-[[:subsection {:title "Collection Literals" :tag "page 19.5" }]]
+[[:subsection {:title "Collection Literals -- page: 19" }]]
 
 (facts
   (fact "the list '(...):"
@@ -156,10 +174,10 @@ So:"
 
 
 
-[[:subsection {:title "Miscellaneous Reader Sugar" :tag "page 20.a" }]]
+[[:subsection {:title "Miscellaneous Reader Sugar-- page: 20" }]]
 
 "
-Evaluation can be suppressed with the (') quote macro, this is equivalent 
+Evaluation can be suppressed with the (') quote macro, this is equivalent
 to the (quote from)
 "
 (fact (quote (a b c)) => '(a b c))
@@ -174,48 +192,63 @@ var refences quotes:  (#'), prevents var from dereferencing
 "
 (def var1 10)
 (fact #'var1 => #'clojure-programming.chapter01/var1)
-"
-derenfernce a var (@)
-"
-;;(fact @var1 => 10)
+
+;(fact "derenfernce a var (@)"
+;  @var1 => 10)
 
 
-[[:section {:title "Namespaces" :tag "page 20.b" }]]
+[[:section {:title "Namespaces-- page: 20" }]]
 
 "
 Namespaces are Clojures unit of code modularity.
 
-A 'namespace' is fundamentally a dynamic mapping between symbols and 
+A 'namespace' is fundamentally a dynamic mapping between symbols and
 either vars and Java classes.
 
 Vars (a reference type) are mutable storage that can hold any value.
 
 They are defined using the 'def' special form.
+"
+(fact (def x 1)
+  => #'clojure-programming.chapter01/x)
+
+(fact "We can access th var's value using that symbol"
+  x => 1)
+
+(facts "We can redifine vars"
+  (def x "hello")  => #'clojure-programming.chapter01/x
+  x => "hello")
+
+"Symbols may be namespace qualified"
+
+;"*ns*  ;=> #<Namespace clojure-programming.chapter01>"
+
+
+;"(fact (ns foo) => nil)"
+
+;"*ns* ;=> #<Namespace foo>"
+
+;(fact clojure-programming.chapter01/x
+; => "hello")
+
+;(ns clojure-programming.chapter01)
+
+"
 
 Never define 'vars' in a funtion body, only at the top level.
 "
 
-(def x 1)
-(fact x => 1)
-
-(def  x "hello")
-(fact x => "hello")
-
-"symbols may be qualified by a namespace.
-*ns* is bound to the current namespace
-
-the 'java.lang' namepace is imported by default into each Clojure namepace:
-"
-(facts
+(facts "Any symbol that names a class evaluates to that class"
   (fact String => java.lang.String)
   (fact Integer => java.lang.Integer)
   (fact java.util.List => java.util.List)
   (fact java.net.Socket => java.net.Socket))
 
-"namespaces also alias the vars included in Clojures standard library 'clojure.core' so it may be used without qualifications"
+"namespaces also alias the vars included in Clojures standard library 'clojure.core' so it may be used without qualifications
+"
 
 
-[[:section {:title "Symbol Evaluation" :tag "page 23" }]]
+[[:section {:title "Symbol Evaluation  -- page: 23"}]]
 
 "
 vars evaluate to there contents,
@@ -223,19 +256,19 @@ numbers, strings and other atomic values evaluate to themselves.
 "
 
 
-[[:section {:title "Special Forms" :tag "page 24.a" }]]
+[[:section {:title "Special Forms -- page: 24"}]]
 
 "
 Symbols in function call position can only eval to two different things:
 * The value of a named var or a local -or-
 * A Clojure special form.
 
-Clojure special forms form the basis of Clojure computation, all other 
-things are build on top of special forms. 
+Clojure special forms form the basis of Clojure computation, all other
+things are build on top of special forms.
 Special forms have there own evaluation syntax
 "
 
-[[:subsection {:title "Suppressing Evaluation: quote" :tag "page 24.b" }]]
+[[:subsection {:title "Suppressing Evaluation: quote  -- page: 24"}]]
 
 (fact (quote x) => 'x)
 (fact (symbol? (quote x)) => truthy)
@@ -247,15 +280,23 @@ Special forms have there own evaluation syntax
   '(+ x x) => '(+ x x)
   (list? '(+ x x)) => true)
 
-(fact ''x => '(quote x))
+(fact (list '+ 'x 'x) => '(+ x x))
+
+(fact "peek at what the reader produces by quoting a form."
+  ''x => '(quote x))
+
+;TODO: fix this
+;(facts "use this for other reader sugars"
+;  (fact '@x => (clojure.core/deref x)))
 
 
-[[:subsection {:title "Code Blocks: do" :tag "page 25" }]]
+[[:subsection {:title "Code Blocks: do  -- page: 25"}]]
 
 (fact "do evaluates all of it's expessions in order and yields the last"
   (do (println "hi")
       (+ 3 4)
       (apply * [4 5 6]))
+  ; hi
   => 120)
 
 "The steps before the last are usually executed for there side effects.
@@ -266,7 +307,7 @@ Many forms (fn let loop try and defn) wrap there bodies in a 'do' form.
       b (int (rand-int 6))]
   (println (format "You rolled a %s and a %s" a b))
   (+ a b))
-" 
+"
 contains an implicit 'do'
 such as:"
 
@@ -277,9 +318,9 @@ such as:"
     (+ a b)))
 
 
-[[:subsection {:title "Defining Vars: def" :tag "page 26" }]]
+[[:subsection {:title "Defining Vars: def  --  page 26"}]]
 "
-def defines or redifines a var with an optional value in the 
+def defines or redifines a var with an optional value in the
 current namespace
 "
 (facts "def'ing vars"
@@ -293,7 +334,7 @@ therefore can create or redifine vars.
 "
 
 
-[[:subsection {:title "Local Bindings: let" :tag "page 27" }]]
+[[:subsection {:title "Local Bindings: let --  page 27"}]]
 "
 let binds locally scoped references, let defines locals
 "
@@ -303,7 +344,8 @@ let binds locally scoped references, let defines locals
         y2 (* y y)]
     (Math/sqrt (+ x2 y2))))
 
-(fact (hypot 3 4) => 5.0)
+(fact (hypot 3.0 4.0)
+  => 5.0)
 "
 let is implicitly used int 'fn' and 'defn' to bind parmeters in the
 local scope.
@@ -316,7 +358,7 @@ All locals are immutable, but you can override local bindings.
 Let bindings provide destructuring at.
 "
 
-[[:subsection {:title "Destructuring - let" :tag "page 28" }]]
+[[:subsection {:title "Destructuring - let --  page 28"}]]
 "
 Most Clojure funtions are based around sequential and map data structures.
 This allows functions and data structures to be trivially composed.
@@ -341,8 +383,11 @@ Clojure sequential collections implement the java.util.List interface (.get)
 Accessing deeper structures are more complicated
 "
 (facts "this is complicated"
-  (fact (+ (first v) (v 2)) => 141.2)
-  (fact (+ (first v) (first (last v))) => 47))
+  (fact (+ (first v) (v 2))
+    => 141.2)
+  (fact "if we need to acces values in nested collections:"
+    (+ (first v) (first (last v)))
+    => 47))
 "
 Clojure destructuring provides a more concise syntax
 Destructuring syntax of 'let' also works for (fn defn loop ...).
@@ -350,10 +395,12 @@ Destructuring syntax of 'let' also works for (fn defn loop ...).
 Destructuring comes in two forms Sequntial and Map.
 "
 "Sequential destructuring works with many types of collections:
-  list vector seq, java.util.List (ArrayList LinkedList), 
+  list vector seq, java.util.List (ArrayList LinkedList),
   java arrays, Strings.
 "
-(fact "basic example"
+(def v [42 "foo" 99.2 [5 12]])
+
+(fact "basic sequential destructuring example"
   (let [[x y z] v]
     (+ x z))
   => 141.2)
@@ -374,7 +421,7 @@ Destructuring comes in two forms Sequntial and Map.
 
 "
 Extra-positional sequential values
-& gathers up the rest of values that lay beyond the values in 
+& gathers up the rest of values that lay beyond the values in
 the destructuring form.
 "
 (fact "extra-positional"
@@ -390,7 +437,7 @@ Retaining the destructured value
   => '[42 "foo" 99.2 [5 12] 141.2])
 
 "
-Map destructuring 
+Map destructuring  -- page: 32
 similar to sequential destructuring.
 It works with hash-maps array-maps records, anything that implements
 java.util.Map, anything that is supported by 'get' vectors Strings Arrays
@@ -405,7 +452,6 @@ java.util.Map, anything that is supported by 'get' vectors Strings Arrays
 (fact (let [{a :a b :b} m]
         (+ a b))
   => 11)
-
 
 (facts "Keynames don't have to match"
   (fact
@@ -702,7 +748,7 @@ If is Clojures sole primative conditionsal operator.
   (fact (if (not true) \t)
     =>  nil))
 
-"If a condition is false and no else expression is provided 
+"If a condition is false and no else expression is provided
  the result will be 'nil'.
 
 Other refinements of the if conditional:
@@ -793,7 +839,7 @@ Since Clojure provides reader sugar it't rare to see 'new' and '.' used.
     => []))
 
 "Static method invocation"
-(facts "Java: Math.pow(2, 10)" 
+(facts "Java: Math.pow(2, 10)"
   (fact "sugared interop form"
     (Math/pow 2 10)
     => 1024.0)

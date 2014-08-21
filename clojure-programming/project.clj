@@ -18,5 +18,11 @@
     {:input "src/clojure_programming/chp02.clj"
      :title "Clojure Programming Chapter 02" 
      :sub-title "Functional Programming"
+     :author "Ed Maphis"}
+
+    "chapter03"
+    {:input "src/clojure_programming/chp03.clj"
+     :title "Clojure Programming Chapter 03" 
+     :sub-title "Collections and Data Structures"
      :author "Ed Maphis"}}}
   )

@@ -13,7 +13,7 @@
   [numbers]
   (/ (apply + numbers) (count numbers)))
 
-(fact (average [60 80 100 400]) => 160)
+	(fact (average [60 80 100 400]) => 160)
 
 
 [[:section {:title "The Reader -- page: 12"}]]
@@ -160,7 +160,7 @@ So:"
   => true)
 
 
-[[:subsection {:title "Collection Literals -- page: 19" }]]
+[[:subsection {:title "Collection Literals-- page: 19" }]]
 
 (facts
   (fact "the list '(...):"
@@ -447,7 +447,7 @@ java.util.Map, anything that is supported by 'get' vectors Strings Arrays
         :c [7 8 9]
         :d {:e 10 :f 11}
         "foo" 88
-        42 false})
+         42 false})
 
 (fact (let [{a :a b :b} m]
         (+ a b))
@@ -477,6 +477,24 @@ java.util.Map, anything that is supported by 'get' vectors Strings Arrays
   (let [{[x _ y] :c} m]
     (+ x y))
   => 16)
+(fact 
+    (let [{f "foo"} m]
+      (+ f 12))  => 100)
+  (fact
+    (let [{v 42} m]
+      (if v 1 0)) => 0))
+ 
+(fact "Matrix destructuring"
+  (let [{x 3, y 8} [12 0 0 -18 44 6 0 0 1]]
+    (+ x y)) => -17)
+
+(fact  "Map entries may also be composed:"
+  (let [{{e :e} :d} m]
+    (* 2 e)) => 20)
+
+(fact "Map and sequence destructuring:"
+  (let [{[x _ y] :c} m]
+    (+ x y)) => 16)
 
 
 ;; TODO: mistake on page 32-33
@@ -610,8 +628,7 @@ functions as a data type"
   => 60)
 
 "notice that the single arity version references it self so that it
- can call the two arity version to do its work."
-
+can call the two arity version to do its work."
 
 (fact "Mutally recursive funtions with letfn:"
   (letfn [(odd? [n]
@@ -688,6 +705,7 @@ into a seq:
 
 (make-usr "Bobby")
 ;=> {:username "Bobby", :join-date #inst "2014-08-19T18:32:26.929-00:00", :email nil, :exp-date #inst "2014-09-18T18:32:26.929-00:00"}
+
 (fact
   (make-usr "Bobby"
             :join-date (java.util.Date. 111 0 1)
@@ -946,3 +964,4 @@ encapsulate evauation semantics
 (comment
   (embedded-repl)
   )
+

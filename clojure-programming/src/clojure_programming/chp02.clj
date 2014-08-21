@@ -141,7 +141,7 @@ Reduce  applies a function to a collection producing a single value
   => 10)
 
 (fact "using a collection a seed alows us to reduce to that type of collection"
-  (reduce 
+  (reduce
    (fn [m v]
      (assoc m v (* v v)))
    {}
@@ -157,7 +157,7 @@ Reduce  applies a function to a collection producing a single value
 
 "
 No one would define 'maxOf' of 'toLowercase' type functions that operate over
-entire collections in Clojure. It makes more sense core functions like 'max' or 
+entire collections in Clojure. It makes more sense core functions like 'max' or
 'lower-case' and use higher-order functions to apply them to collections.
 "
 
@@ -216,8 +216,6 @@ some of the arguments returning a new function that applies to the rest.
     => '(28 80 162)))
 
 
-(comp-negated-sum-str 10 12 3.4)
-(comp-negated-sum-str 10 12 3.4)
 [[:section {:title "Composition of Functionality --  page: 68"}]]
 
 "
@@ -237,17 +235,218 @@ Compositionality is the ability to build more complex things out of smaller simp
   (comp-negated-sum-str 10 12 3.4)
   => "-25.4")
 
-" (comp f g h) acts like a pipeline passing arguments from h to g to f 
+" (comp f g h) acts like a pipeline passing arguments from h to g to f
+
 "
 
+(fact "the resulting type of each function must be compatible with the next function"
+  ((comp + - str) 5 10)
+  => (throws java.lang.ClassCastException))
+
+"Another example:"
+
+(require '[clojure.string :as str])
+
+(def camel->keyword (comp keyword
+                          str/join
+                          (partial interpose \-)
+                          (partial map str/lower-case)
+                          #(str/split % #"(?<=[a-z])(?=[A-Z])")))
+
+(fact (camel->keyword "CamelCase")
+  => :camel-case)
+
+(fact (camel->keyword "lowerCamelCase")
+  => :lower-camel-case)
+
+(def camel-pairs->map (comp (partial apply hash-map)
+                            (partial map-indexed (fn [i x]
+                                                   (if (odd? i)
+                                                     x
+                                                     (camel->keyword x))))))
+
+(fact (camel-pairs->map ["CamelCase" 5 "lowerCamelcase" 3])
+  => {:camel-case 5, :lower-camelcase 3})
 
 
 [[:subsection {:title "Writing Higher-Order Functions -- page: 71"}]]
+"
+Functional composition is one way to build abstractions, a more genral way
+is higher-order functions
+"
+(defn adder
+  "produce a function that add a given number to it's result"
+  [n]
+  (fn [x] (+ n x)))
+
+(fact ((adder 5) 18)
+  => 23)
+
+(def add5 (adder 5))
+
+(fact (add5 18)
+  => 23)
+
+(defn doubler
+  "doubles the result of the given function"
+  [f]
+  (fn [& args]
+    (* 2 (apply f args))))
+
+(def double-+ (doubler +))
+
+(fact (double-+ 1 2 3)
+  => 12)
 
 [[:subsection {:title "Primative Logging System Example -- page: 72"}]]
 
+"Use something more useful than System.out.println for error logging "
+
+(defn print-logger
+  [writer]
+  #(binding [*out* writer]
+     (println %)))
+
+(def *out*-logger
+  "a logger that prints to standard output"
+  (print-logger *out*))
+
+(fact (*out*-logger "hello")
+  ; hello
+  => nil)
+
+"
+Logging to a memory buffer:"
+
+(def writer
+  "a memory buffer"
+  (java.io.StringWriter. ))
+
+(def retained-logger
+  "a logger that logs to a defined memory buffer"
+  (print-logger writer))
+
+(facts
+  (fact (retained-logger "hello") => nil)
+  (fact (str writer)
+    => #"hello\n"))   ;test for only one "hello\n"
+
+"
+logging to a file:"
+
+(require 'clojure.java.io)
+
+(defn file-logger
+  "a logger that logs to a given file"
+  [file]
+  #(with-open [f (clojure.java.io/writer file :append true)]
+     ((print-logger f) %)))
+
+"
+Let's see how we are doing:"
+
+(def log->file
+  "a file to log to"
+  (file-logger "messages.log"))
+
+(log->file "hello")
+
+"
+Logging to multiple paths:"
+
+(defn multi-logger
+  "chain a series of given loggers"
+  [& logger-fns]
+  #(doseq [f logger-fns]
+     (f %)))
+
+(def log
+  "log to a given log file and standard output"
+  (multi-logger
+   (print-logger *out*)
+   (file-logger "messages.log")))
+
+(log "hello again")
+
+
+"
+Timestamped logger:"
+
+(defn timestamped-logger
+  "creates logger that prepends a timestamp to a log message"
+  [logger]
+  #(logger (format "[%1$tY-%1$tm-%1$te %1$tH:%1$tM:%1$tS] %2$s" (java.util.Date.) %)))
+
+(def log-timestamped (timestamped-logger
+                      (multi-logger
+                       (print-logger *out*)
+                       (file-logger "messages.log"))))
+
+(log-timestamped "goodbye, now")
+
+
 [[:section {:title "Pure Functions --  page: 78"}]]
+"
+Other side of the coin of immutable data. Many errors in programs can be attributed
+to function side effects.
+"
+"
+(defn perform-bank-transfer!
+  [from-account to-account amount]
+  ..fun...)
+"
+"a twitter function"
+
+(require 'clojure.xml)
+
+(defn twitter-followers
+[username]
+(->> (str "https://api.twitter.com/1/users/show.xml?screen_name=" username)
+clojure.xml/parse
+:content
+(filter (comp #{:followers_count} :tag))
+first
+:content
+first
+Integer/parseInt))
+
+;; (twitter-followers "ClojureBook") ;;outdated.
+
 
 [[:subsection {:title "Why are pure functions Interesting -- page: 78"}]]
 
-[[:section {:title "Real World --  page: 81"}]]
+"
+Some advantages:
+Pure functions are easier to reason about (same input - same output).
+Pure functions are easier to test (no side effects).
+Pure functions are easier to cache and parallelize (referntially transparent).
+"
+"cache -  memoize:"
+
+(defn prime?
+  [n]
+  (cond
+   (== 1 n) false
+   (== 2 n) true
+   (even? n) false
+   :else (->> (range 3 (inc (Math/sqrt n)) 2)
+              (filter #(zero? (rem n %)))
+              empty?)))
+(comment
+  (time (prime? 1125899906842679))
+  ;; Elapsed time: 13701.7049 msecs
+  ;; => true
+
+  (time (prime? 1125899906842679))
+  ;;"Elapsed time: 14383.205084 msecs"
+  ;; => true
+
+  (let [m-prime? (memoize prime?)]
+    (time (m-prime? 1125899906842679))
+    (time (m-prime? 1125899906842679)))
+  )
+
+(repeatedly 10 (partial rand-int 10))
+"=> (7 2 2 1 6 5 4 0 8 4)"
+(repeatedly 10 (partial (memoize rand-int) 10))
+"=> (7 7 7 7 7 7 7 7 7 7)  ;; oops!"

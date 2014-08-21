@@ -4,7 +4,7 @@
 
 [[:section {:title "Functional Programming and Values --  page: 52"}]]
 
-"Fuctional programming:
+"Functional programming:
 - Preference of working with immutable data structures.
 - Functions as values themselves.
 - Preference for working wih declarative processing of data rather than using
@@ -17,7 +17,7 @@
 "
 Values:
  Most programming language incourage the use of mutable state. Functional lanugages
-including Clojure incourage the use of immutable values.
+ including Clojure incourage the use of immutable values.
 
 Since clojure values are immutable:
 "
@@ -89,7 +89,7 @@ public static void toLowerCase (List<String> strings) {
 "
 (require 'clojure.string)
 
-(facts "clojures versions are easy to call separate fucntions"
+(facts "clojures versions are easy to call separate functions"
   (fact
     (max 5 6)
     => 6)
@@ -118,10 +118,10 @@ functions applied to each unit:
   => '(5 12 21 32))
 
 "
-Differnces between map and 'toLowercase':
+Differences between map and 'toLowercase':
 - 'toLowercase' mutated it's argument.
 - if 'toLowercase' returned a new collection, we would have to handle memory allocation
-  and type of collection. Map aways returns a sequence.
+i  and type of collection. Map aways returns a sequence.
 - We would have to worry about the imperative flow of control.
 
 Reduce  applies a function to a collection producing a single value
@@ -140,11 +140,107 @@ Reduce  applies a function to a collection producing a single value
   (reduce + [1 2 3 4])
   => 10)
 
+(fact "using a collection a seed alows us to reduce to that type of collection"
+  (reduce 
+   (fn [m v]
+     (assoc m v (* v v)))
+   {}
+   [1 2 3 4])
+  => {4 16, 3 9, 2 4, 1 1})
+
+(fact "using a function literal"
+  (reduce
+   #(assoc %1 %2 (* %2 %2))
+   {}
+   [1 2 3 4])
+  => {4 16, 3 9, 2 4, 1 1})
+
+"
+No one would define 'maxOf' of 'toLowercase' type functions that operate over
+entire collections in Clojure. It makes more sense core functions like 'max' or 
+'lower-case' and use higher-order functions to apply them to collections.
+"
 
 [[:subsection {:title "Applying Ourselves Partially -- page: 65"}]]
 
+"Function application is the invocation of a function  on a sequence of values:"
 
+(fact "clojure function application:"
+  (apply hash-map [:a 5 :b 6])
+  => {:b 6, :a 5})
+
+(def args [2 -2 10])
+
+(fact "prefix with a number of arguments"
+  (apply * 0.5 3 args)
+  => -60.0)
+
+"
+'apply' applies a function to all arguments in a sequence, 'partial' only applies
+some of the arguments returning a new function that applies to the rest.
+"
+(def only-strings (partial filter string?))
+
+(fact "partial application"
+  (only-strings ["a" 5 "b" 6])
+  => '("a" "b"))
+
+(fact "function literals are similar to partials:"
+  (#(filter string? %) ["a" 5 "b" 6])
+  => '("a" "b"))
+
+(facts "not just limited to initial arguments"
+  (fact (#(filter % ["a" 5 "b" 6]) number?)
+    => '(5 6))
+  (fact (#(filter % ["a" 5 "b" 6]) string?)
+    => '("a" "b")))
+
+(facts "But function literals require all arguments to be fully specified"
+  (fact "must account for number of arguments"
+    (#(map *) [1 2 3] [4 5 6] [7 8 9])
+    => (throws clojure.lang.ArityException))
+  (fact "enumerating arguments"
+    (#(map * %1 %2 %3) [1 2 3] [4 5 6] [7 8 9])
+    => '(28 80 162))
+  (fact "must align wiht passed arguments"
+    (#(map * %1 %2 %3) [1 2 3] [4 5 6])
+    => (throws clojure.lang.ArityException))
+  (fact "apply using 'rest' arguments"
+    (#(apply map * %&) [1 2 3] [4 5 6] [7 8 9])
+    => '(28 80 162))
+  (fact "still works but duplicates what 'partial' does better"
+    (#(apply map * %&) [1 2 3])
+    => '(1 2 3))
+  (fact "much better"
+    ((partial map *) [1 2 3] [4 5 6] [7 8 9])
+    => '(28 80 162)))
+
+
+(comp-negated-sum-str 10 12 3.4)
+(comp-negated-sum-str 10 12 3.4)
 [[:section {:title "Composition of Functionality --  page: 68"}]]
+
+"
+Compositionality is the ability to build more complex things out of smaller simpler parts. Different programming languages use diffent methods of composition. Functional languages us functions.
+"
+(defn negated-sum-str
+  "negate a sum of some given numbers"
+  [& numbers]
+  (str (- (apply + numbers))))
+
+(fact (negated-sum-str 10 12 3.4)
+  => "-25.4")
+
+(def comp-negated-sum-str (comp str - +))
+
+(fact "composed version:"
+  (comp-negated-sum-str 10 12 3.4)
+  => "-25.4")
+
+" (comp f g h) acts like a pipeline passing arguments from h to g to f 
+"
+
+
 
 [[:subsection {:title "Writing Higher-Order Functions -- page: 71"}]]
 

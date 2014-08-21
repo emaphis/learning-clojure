@@ -477,12 +477,14 @@ java.util.Map, anything that is supported by 'get' vectors Strings Arrays
   (let [{[x _ y] :c} m]
     (+ x y))
   => 16)
+
 (fact 
-    (let [{f "foo"} m]
-      (+ f 12))  => 100)
-  (fact
-    (let [{v 42} m]
-      (if v 1 0)) => 0))
+  (let [{f "foo"} m]
+    (+ f 12))  => 100)
+
+(fact
+  (let [{v 42} m]
+    (if v 1 0)) => 0)
  
 (fact "Matrix destructuring"
   (let [{x 3, y 8} [12 0 0 -18 44 6 0 0 1]]
@@ -964,4 +966,3 @@ encapsulate evauation semantics
 (comment
   (embedded-repl)
   )
-

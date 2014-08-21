@@ -7,7 +7,7 @@
 
 "
 'defn' defines a new function named 'average' in the namespace.
-'average' takes one  refered to as 'number'.
+'average' takes one  referred to as 'number'.
 "
 (defn average
   [numbers]
@@ -327,7 +327,7 @@ current namespace
   (def p "foo") => #'p
   p => "foo")
 "
-(defn defn- defprotocol defonce defmacro) all use 'def' implicityl
+(defn defn- defprotocol defonce defmacro) all use 'def' implicitly
 therefore can create or redifine vars.
 
 (deftype defrecord defmethod) don't define or modify vars.
@@ -360,7 +360,7 @@ Let bindings provide destructuring at.
 
 [[:subsection {:title "Destructuring - let --  page 28"}]]
 "
-Most Clojure funtions are based around sequential and map data structures.
+Most Clojure functions are based around sequential and map data structures.
 This allows functions and data structures to be trivially composed.
 One challenge is to access$ the data in these structures.
 "
@@ -529,7 +529,7 @@ java.util.Map, anything that is supported by 'get' vectors Strings Arrays
     (+ k x))
   => 55)
 
-(fact ":or knows the differnce between no value and 'false' value"
+(fact ":or knows the difference between no value and 'false' value"
   (let [{opt1 :option} {:option false}
         opt1 (or opt1 true)
         {opt2 :option :or {opt2 true}} {:option false}]
@@ -539,17 +539,17 @@ java.util.Map, anything that is supported by 'get' vectors Strings Arrays
 
 "Binding values to there key's names  page 34"
 
-(def chas {:name "Chas" :age 31 :location "Massachesetts"})
+(def chas {:name "Chas" :age 31 :location "Massachusetts"})
 
 (fact "binding values using the same names can get repetittive:"
   (let [{name :name age :age location :location} chas]
     (format "%s is %s years old and lives in %s." name age location))
-  => "Chas is 31 years old and lives in Massachesetts.")
+  => "Chas is 31 years old and lives in Massachusetts.")
 
 (fact "using the ':keys' option:"
   (let [{:keys [name age location]} chas]
     (format "%s is %s years old and lives in %s." name age location))
-  => "Chas is 31 years old and lives in Massachesetts.")
+  => "Chas is 31 years old and lives in Massachusetts.")
 
 "switch when we know we are using strings or symbols as keys"
 
@@ -586,7 +586,7 @@ java.util.Map, anything that is supported by 'get' vectors Strings Arrays
 
 [[:subsection {:title "Creating Functions:fn -- page: 36"}]]
 
-"Functions are first class so Clojure can create annonymous
+"Functions are first class so Clojure can create anonymous
 functions as a data type"
 
 (fn [x]
@@ -741,7 +741,7 @@ Function literals:    page: 40"
      (Math/pow %1 %2))
 
 "
-Function literals also have rest agruments (%&):"
+Function literals also have rest arguments (%&):"
 
 (fn [x & rest]
   (- x (apply + rest)))
@@ -754,7 +754,7 @@ Function literals also have rest agruments (%&):"
 [[:subsection {:title "Conditionals: if  --  page: "}]]
 
 "
-If is Clojures sole primative conditionsal operator.
+If is Clojures sole primative conditional operator.
 "
 (facts "Conditionals determine logical truth to be any thing other than 'nil' or 'false"
   (fact (if "hi" \t)
@@ -792,8 +792,8 @@ to the conditionals:
 [[:subsection {:title "Looping: loop recure -- page: 43"}]]
 
 "
-Several useful imperative looping constructs (doseq and dotimes) are based on recure
-'recure' transferes controle without consuming stack space.
+Several useful imperative looping constructs (doseq and dotimes) are based on recur
+'recur' transferes control without consuming stack space.
 "
 
 
@@ -822,7 +822,7 @@ Because 'recur' doesn't use stack space it is preferable to use inplace of natur
 "
 
 
-[[:subsection {:title "Reffering to Vars: var -- page:  page: 44"}]]
+[[:subsection {:title "Referring to Vars: var -- page:  page: 44"}]]
 
 "Sybols name a var evaluate to that vars value:"
 
@@ -906,8 +906,8 @@ Since Clojure provides reader sugar it't rare to see 'new' and '.' used.
 - deftype: page: 277
 "
 
-[[:subsection {:title "Primative Locking: monitor-enter, monitor-exit -- page: 45"}]]
-"Primatives for Java Object locking:  page: 225"
+[[:subsection {:title "Primitive Locking: monitor-enter, monitor-exit -- page: 45"}]]
+"Primitives for Java Object locking:  page: 225"
 
 
 [[:section {:title "Putting If All Together --  page:  46"}]]
@@ -932,7 +932,7 @@ defn is shorthand for:
 [[:subsection {:title "Eval -- page: 46"}]]
 
 "
-encapsulate evauation semantics
+encapsulate evaluation semantics
 "
 (facts "evaluation of literals:"
   (fact (eval :foo)

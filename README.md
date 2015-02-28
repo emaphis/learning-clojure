@@ -18,4 +18,8 @@ I'm using the Midje unit testing library.[website](https://github.com/marick/Mid
 
 This test first style of learning is similar to one taught in the text book "How to Design Programms" [website](http://htdp.org/).
 
+Also adding exercises for Clojure for the Brave and True: [website](http://www.braveclojure.com/)
+
+Also using Midje to test and provide executable examples
+
 Ed

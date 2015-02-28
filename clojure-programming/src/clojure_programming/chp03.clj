@@ -389,8 +389,87 @@ checking.  'rest' returns the tail maximizing laziness.
 Code defining lazy sequences should minimize side effects.
 "
 
-
 [[:subsection {:title "Associative --  page: 99"}]]
+"
+The associative abstraction is used by collections that link keys to values.
+
+It is defined by four functions:
+
+- 'assoc' creates new associations between keys and values in a collection.
+- 'dissoc' drops association for keys in the collection.
+- 'get' looks up a value in a collection. 
+- 'contains?' a predicate that returns whether a key is in the collection.
+
+The most used structure is the 'map'."
+
+(def m {:a 1, :b 2, :c 3})
+
+(facts "'assoc' and 'dissoc' are a more natural fit then 'conj' ans 'seq'"
+  (fact (get m :b)
+    => 2)
+  (fact (get m :d)
+    => nil)
+  (fact (get m :d "not-found")
+    => "not-found")
+  (fact (assoc m :d 4)
+    => {:c 3, :b 2, :d 4, :a 1})
+  (fact (dissoc m :b)
+    => {:c 3, :a 1}))
+
+(facts "'assoc' and 'dissoc can be used for mutiple entries"
+  (fact
+    (assoc m
+      :x 4
+      :y 5
+      :z 6)
+    => {:y 5, :z 6, :c 3, :b 2, :x 4, :a 1})
+  (fact
+    (dissoc m :a :c)
+    => {:b 2}))
+
+
+(def v [1 2 3])
+
+(facts "'get' and 'assoc' are supported by vectors:"
+  (fact (get v 1)
+    => 2)
+  (fact (get v 10)
+    => nil)
+  (fact (get v 10 "not-found")
+    => "not-found")
+  (fact (assoc v
+          1 4
+          0 -12
+          2 :p)
+    => [-12 4 :p]))
+
+(fact "can add but need to remember what the new index will be:"
+  (assoc v 3 10)
+  => [1 2 3 10])
+
+(facts "'get' works on sets - the key is the value"
+  (fact (get #{1 2 3} 2)
+    => 2)
+  (fact (get #{1 2 3} 4)
+    => nil)
+  (fact (get #{1 2 3} 4 "not-found")
+    => "not-found"))
+
+
+(fact "sets can be used like a conditional\"\""
+  (when (get #{1 2 3} 2)
+    "it contains '2'!")
+  => "it contains '2'!")
+
+(facts "'contains?' is a predicate that returns 'true' if a collection contains a key"
+  (fact (contains? [1 2 3] 0)
+    => true)
+  (fact (contains? {:a 5 :b 6} :b)
+    => true)
+  (fact (contains? {:a 5 :b 6} 42)
+    => false)
+  (fact (contains? #{1 2 3} 1)
+    => true))
 
 [[:subsection {:title "Indexed --  page: 103"}]]
 

@@ -1,20 +1,12 @@
-(ns clojure-noob.core
-  (:require [midje.sweet :refer :all])
-  (:gen-class))
+(ns clojure-noob.do-things
+  (:require [midje.sweet :refer :all]))
 
-(defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
-  (println "I'm a little teapot!"))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; forms
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(println "Cleanliness is next to godliness")
+;; do
 
-(defn train
-  []
-  (println "Choo choo!"))
-
-(+ 1 (* 2 3) 4)
-;; (+ 1 (* 2 3) 4)
 
 (if true
   (do (println "Success!")
@@ -36,13 +28,16 @@
 ;; Maps
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; empty map
-{}
+(fact
+  "empty map"
+  {} => {})
 
-;; :a :b :c are keywords
-{:a 1
- :b "boring example"
- :c []}
+(fact ":a :b :c are keywords"
+  {:a 1
+   :b "boring example"
+   :c []}
+  =>
+  {:a 1 :b "boring example" :c []})
 
 ;; Maps can be nested
 {:name {:first "John" :middle "Jacob" :last "Jingleheimerscmidt"}}

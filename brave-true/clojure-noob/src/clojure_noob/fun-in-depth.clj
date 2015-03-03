@@ -9,8 +9,9 @@
   [topic]
   (str topic " for the Brave and True"))
 
-(map titleize ["Hamsters" "Ragnarok"])
-;; => ("Hamsters for the Brave and True" "Ragnarok for the Brave and True")
+(fact "test titleize"
+  (map titleize ["Hamsters" "Ragnarok"])
+  => '("Hamsters for the Brave and True" "Ragnarok for the Brave and True"))
 
 (defn label-key-value
   [[key val]]
@@ -18,15 +19,16 @@
 
 (map label-key-value {:name "Edward" :occupation "perenial high-schooler"})
 ;; => ("key: :occupation, val: perenial high-schooler" "key: :name, val: Edward")
+(fact 
+  (map (fn [[key val]] [key (inc val)])
+       {:max 30 :min 10})
+  => '([:min 11] [:max 31]))
 
-(map (fn [[key val]] [key (inc val)])
-     {:max 30 :min 10})
-;; => ([:min 11] [:max 31])
-
-(into {} 
-      (map (fn [[key val]] [key (inc val)])
-           {:max 30 :min 10}))
-;;  => {:min 11, :max 31}
+(fact 
+  (into {} 
+        (map (fn [[key val]] [key (inc val)])
+             {:max 30 :min 10}))
+  => {:min 11, :max 31})
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -137,7 +139,7 @@
        {:day 2, :human 4.0, :month 3, :critter 3.8}
        {:day 1, :human 3.7, :month 4, :critter 3.9}
        {:day 2, :human 3.7, :month 4, :critter 3.6}))
-)
+
 (fact "drop January then keep until April"
   (take-while #(< (:month %) 4)
               (drop-while #(< (:month %) 2) food-journal))

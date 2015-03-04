@@ -13,22 +13,23 @@
   (map titleize ["Hamsters" "Ragnarok"])
   => '("Hamsters for the Brave and True" "Ragnarok for the Brave and True"))
 
-(defn label-key-value
-  [[key val]]
-  (str "key: " key ", val: " val))
+;(defn label-key-value
+;  [[key val]]
+;  (str "key: " key ", val: " val))
 
-(map label-key-value {:name "Edward" :occupation "perenial high-schooler"})
-;; => ("key: :occupation, val: perenial high-schooler" "key: :name, val: Edward")
-(fact 
-  (map (fn [[key val]] [key (inc val)])
-       {:max 30 :min 10})
-  => '([:min 11] [:max 31]))
+;(map label-key-value {:name "Edward" :occupation "perenial high-schooler"})
+; => '("key: :occupation, val: perenial high-schooler" "key: :name, val: Edward")
 
-(fact 
-  (into {} 
-        (map (fn [[key val]] [key (inc val)])
-             {:max 30 :min 10}))
-  => {:min 11, :max 31})
+;(fact 
+;  (map (fn [[key val]] [key (inc val)])
+;       {:max 30 :min 10})
+;  => '([:min 11] [:max 31]))
+
+;(fact 
+;  (into {} 
+;        (map (fn [[key val]] [key (inc val)])
+;             {:max 30 :min 10}))
+;  => {:min 11, :max 31})
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -36,16 +37,17 @@
 
 ;; The ISeq interface
 
-(fact "returns whatever is passed to it."
-  (identity "Stefan Salvatore from Vampire Diaries")
-  => "Stefan Salvatore from Vampire Diaries")
+;(fact "returns whatever is passed to it."
+;  (identity "Stefan Salvatore from Vampire Diaries")
+;  => "Stefan Salvatore from Vampire Diaries")
 
-(fact "a non sequenctial collection is conveted to a sequence"
-  (map identity {:name "Bill Compton" :occupation "Dead mopey guy"})
-  => ([:occupation "Dead mopey guy"] [:name "Bill Compton"]))
+;; FIXME *********
+;(fact "a non sequenctial collection is conveted to a sequence"
+;  (map identity {:name "Bill Compton" :occupation "Dead mopey guy"})
+;  => ([:occupation "Dead mopey guy"] [:name "Bill Compton"]))
 
-(fact (seq {:name "Bill Compton" :occupation "Dead mopey guy"})
-  => ([:occupation "Dead mopey guy"] [:name "Bill Compton"]))
+;(fact (seq {:name "Bill Compton" :occupation "Dead mopey guy"})
+;  => ([:occupation "Dead mopey guy"] [:name "Bill Compton"]))
 
 ;; sequence function examples
 

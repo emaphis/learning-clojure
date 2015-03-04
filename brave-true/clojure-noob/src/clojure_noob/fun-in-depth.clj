@@ -3,62 +3,84 @@
 
 ;; Programming to Abstractions
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; one function on different data structures
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn titleize
   [topic]
   (str topic " for the Brave and True"))
 
-(fact "test titleize"
-  (map titleize ["Hamsters" "Ragnarok"])
-  => '("Hamsters for the Brave and True" "Ragnarok for the Brave and True"))
+(facts "test titleize"
 
-;(defn label-key-value
-;  [[key val]]
-;  (str "key: " key ", val: " val))
+  (fact "titleize a vector"
+    (map titleize ["Hamsters" "Ragnarok"])
+    => '("Hamsters for the Brave and True" "Ragnarok for the Brave and True"))
 
-;(map label-key-value {:name "Edward" :occupation "perenial high-schooler"})
-; => '("key: :occupation, val: perenial high-schooler" "key: :name, val: Edward")
+  (fact "titleize a list"
+    (map titleize '("Empathy" "Decorating"))
+    => '("Empathy for the Brave and True" "Decorating for the Brave and True"))
 
-;(fact 
-;  (map (fn [[key val]] [key (inc val)])
-;       {:max 30 :min 10})
-;  => '([:min 11] [:max 31]))
+  (fact
+    (map titleize #{"Elbows" "Soap Carving"})
+    => (contains '("Soap Carving for the Brave and True" "Elbows for the Brave and True")
+                 :in-any-order)))
 
-;(fact 
-;  (into {} 
-;        (map (fn [[key val]] [key (inc val)])
-;             {:max 30 :min 10}))
-;  => {:min 11, :max 31})
+(defn label-key-val
+  [[key val]]
+  (str "key: " key ", val: " val))
+
+(fact
+  (map label-key-val {:name "Edward"
+                      :occupation "perennial high-schooler"})
+  => (contains '("key: :name, val: Edward"
+                 "key: :occupation, val: perennial high-schooler")
+               :in-any-order))
+
+(fact "transform a map by applying a function to each of the map's values:"
+  (map (fn [[key val]] [key (inc val)])
+     {:max 30 :min 10})
+  => (contains '([:max 31] [:min 11])
+               :in-any-order))
+
+(fact "convert back 'into' a map"
+  (into {}
+      (map (fn [[key val]] [key (inc val)])
+           {:max 30 :min 10}))
+  => {:max 31, :min 11})
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; the sequence abstraction:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; The ISeq interface - alows many data structurs to act as sequences
 
-;; The ISeq interface
+(fact "'identity' returns whatever is passed to it."
+  (identity "Stefan Salvatore from Vampire Diaries")
+  => "Stefan Salvatore from Vampire Diaries")
 
-;(fact "returns whatever is passed to it."
-;  (identity "Stefan Salvatore from Vampire Diaries")
-;  => "Stefan Salvatore from Vampire Diaries")
 
-;; FIXME *********
-;(fact "a non sequenctial collection is conveted to a sequence"
-;  (map identity {:name "Bill Compton" :occupation "Dead mopey guy"})
-;  => ([:occupation "Dead mopey guy"] [:name "Bill Compton"]))
+(fact "a non sequenctial collection is conveted to a sequence using 'map' and 'identity'"
+  (map identity {:name "Bill Compton" :occupation "Dead mopey guy"})
+  => (contains '([:name "Bill Compton"] [:occupation "Dead mopey guy"]) :in-any-order))
 
-;(fact (seq {:name "Bill Compton" :occupation "Dead mopey guy"})
-;  => ([:occupation "Dead mopey guy"] [:name "Bill Compton"]))
+(fact "the seq function converts a map data structure into a sequence of vectors"
+  (seq {:name "Bill Compton" :occupation "Dead mopey guy"})
+  => (contains '([:name "Bill Compton"] [:occupation "Dead mopey guy"]) :in-any-order))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; sequence function examples
 
-;;;;;;;;;;;;;;;;;;;;;
-;; map 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; map
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(fact "applies a function over a sequence"
+(fact "'map' applies a function over a sequence"
   (map inc [1 2 3])
   => '(2 3 4))
 
-(fact "map applied over multiple sequences"
+(fact "'map' applied over multiple sequences"
   (map str ["a" "b" "c"] ["A" "B" "C"])
   => '("aA" "bB" "cC")
   (map + [1 2 3] [1 2 3])
@@ -72,7 +94,7 @@
   {:human human
    :critter critter})
 
-(fact
+(fact "apply to data"
   (map unify-diet-data human-consumption critter-consumption)
   => '({:human 8.1, :critter 0.0}
        {:human 7.3, :critter 0.2}
@@ -86,12 +108,20 @@
   [numbers]
   (map #(% numbers) [sum count avg]))
 
-(fact (stats [3 4 10])  => '(17 3 17/3))
-(fact (stats [10 1 44 13 6])  => '(74 5 74/5))
+(fact
+
+  (stats [3 4 10])
+  => '(17 3 17/3)
+
+  (stats [80 1 44 13 6])
+  => '(144 5 144/5))
+
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; reduce
+;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (fact "use reduce to update a map data structure"
   (reduce (fn [new-map [key val]]
@@ -110,8 +140,10 @@
            :critter 3.9})
   => {:human 4.1})
 
-;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; take, drop, take-while, drop-while
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (fact (take 3 [1 2 3 4 5 6 7 8 9 10])
   => '(1 2 3))
@@ -153,6 +185,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; filter, some
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (fact "journal entries for human less than 5 liters"
   (filter #(< (:human %) 5) food-journal)
@@ -171,30 +204,44 @@
        {:day 2, :human 5.0, :month 2, :critter 2.5}))
 
 (facts "'some' returns the first true value returned by a predicate"
-  (fact (some #(> (:critter %) 5) food-journal) => nil)
-  (fact (some #(> (:critter %) 3) food-journal) => true))
+  (fact
+    (some #(> (:critter %) 5) food-journal)
+    => nil)
+  (fact
+    (some #(> (:critter %) 3) food-journal)
+    => true))
 
-(fact "return the actual value"
+(fact "return the actual value that was true"
   (some #(and (> (:critter %) 3) %) food-journal)
-  => {:day 1, :human 4.2, :month 3, :critter 3.3})
+  => {:month 3 :day 1 :human 4.2 :critter 3.3})
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; sort, sort-by
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(fact (sort [3 2 1])
+(fact "sort in ascending order"
+  (sort [3 2 1])
   => '(1 2 3))
 
-(fact (sort-by count ["aaa" "c" "bb"])
+(fact "sort uning a 'key-function'"
+  (sort-by count ["aaa" "c" "bb"])
   => '("c" "bb" "aaa"))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; concat
-(fact (concat [1 2] [3 4])
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(fact "appends 'flattens' sequences"
+  (concat [1 2] [3 4])
   => '(1 2 3 4))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; lazy sequence
 ;; 'realizing' when needed
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def vampire-database
   {0 {:makes-blood-puns? false, :has-pulse? true  :name "McFishwich"}
@@ -217,25 +264,29 @@
   (first (filter vampire?
                  (map vampire-related-details social-security-numbers))))
 
-;; (time (identify-vampire (range 0 10000)))
-;; "Elapsed time: 32007.469024 msecs"
-;; => {:makes-blood-puns? true, :has-pulse? false, :name "Damon Salvatore"}
+;; don't run when compiling or testing
+;;(fact
+;;  (time (identify-vampire (range 0 10000)))
+;; ;; "Elapsed time: 32007.469024 msecs"
+;;  => {:makes-blood-puns? true, :has-pulse? false, :name "Damon Salvatore"})
 
 ;; doall realizes all elements of a lazy sequence
 
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Infinite equences
+;;;;;;;;;;;;;;;;;;;;;;
 
 (fact "'repeat' infinite repeated sequence"
   (concat (take 8 (repeat "na")) ["Batman!"])
   => '("na" "na" "na" "na" "na" "na" "na" "na" "Batman!"))
 
 ;; repeates the output of a fucntion
-(take 3 (repeatedly (fn [] (rand-int 10))))
+;(take 3 (repeatedly (fn [] (rand-int 10))))
 ;; => (9 7 1)
 
 (defn even-numbers
-  "infinite sequence of even numbers"
+  "lazy infinite sequence of even numbers"
   ([] (even-numbers 0))
   ([n] (cons n (lazy-seq (even-numbers (+ n 2))))))
 
@@ -243,31 +294,47 @@
   (take 10 (even-numbers))
   => '(0 2 4 6 8 10 12 14 16 18))
 
+(fact "remember that 'cons' returns a new list with an element prepended to the given list"
+  (cons 0 '(2 4 6))
+  => '(0 2 4 6))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; the collection abstraction:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; sequence is about operating on members
 ;; collection is about operating operating on the structure as a whole.
 ;;  count, empty?,every?
 
 (facts "about empty? operating on collections"
-  (fact (empty? [])
+  (fact
+    (empty? [])
     => true)
-  (fact (empty? ["no!"])
+  (fact
+    (empty? ["no!"])
     => false))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; into
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (facts "about into"
-  (fact (map identity {:sunlight-reation "Glitter!"})
+  (fact "'map' returns a 'seq'"
+    (map identity {:sunlight-reation "Glitter!"})
     => '([:sunlight-reation "Glitter!"]))
-  (fact (into {} (map identity {:sunlight-reation "Glitter!"}))
+  (fact "convert 'seq' 'into' a map"
+    (into {} (map identity {:sunlight-reation "Glitter!"}))
     => {:sunlight-reation "Glitter!"}))
 
 (facts "convert back to vector"
-  (fact (map identity [:garlic :sesame-oil :fried-eggs])
+  (fact "'map returns a 'seq'"
+    (map identity [:garlic :sesame-oil :fried-eggs])
     => '(:garlic :sesame-oil :fried-eggs))
-  (fact (into [] (map identity [:garlic :sesame-oil :fried-eggs]))
+
+  (fact  "'into' a vector"
+    (into [] (map identity [:garlic :sesame-oil :fried-eggs]))
     => [:garlic :sesame-oil :fried-eggs]))
 
 (fact "convert back to list"
@@ -279,27 +346,44 @@
   => #{:garlic-clove})
 
 (facts "the first argument of 'into' doesn't have to be empty"
-  (fact  (into {:favorite-emotion "glommy"} [[:sunlight-reaction "Glitter!"]])
+  (fact
+    (into {:favorite-emotion "glommy"} [[:sunlight-reaction "Glitter!"]])
     => {:favorite-emotion "glommy", :sunlight-reaction "Glitter!"})
-  (fact (into ["cherry"] '("pine" "spruce"))
+  (fact
+    (into ["cherry"] '("pine" "spruce"))
     => ["cherry" "pine" "spruce"]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;
+(fact "both arguments can be the same type:"
+  (into {:favorite-animal "kitty"} {:least-favorite-smell "dog"
+                                  :relationship-with-teenager "creepy"})
+  =>
+  {:favorite-animal "kitty"
+   :relationship-with-teenager "creepy"
+   :least-favorite-smell "dog"})
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; conj - add elements to a collection.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (facts "about conj"
-  (fact "not so good - added whole collection"
+
+  (fact "not so good - added the entire vector [1] onto [0]"
     (conj [0] [1])
     => [0 [1]])
-  (fact "ok"
+
+  (fact "compare to:"
     (into [0] [1])
     => [0 1])
+
   (fact "Here's what we want"
     (conj [0] 1)
     => [0 1])
+
   (fact "we can supply multiple items"
     (conj [0] 1 2 3 4)
     => [0 1 2 3 4])
+
   (fact "we can add maps"
     (conj {:time "midnight"} [:place "ye olde cemetarum"])
     => {:place "ye olde cemetarum", :time "midnight"}))
@@ -310,9 +394,11 @@
   (into target additions))
 
 (facts "about my-conj"
-  (fact (my-conj [0] 1)
+  (fact "single value"
+    (my-conj [0] 1)
     => [0 1])
-  (fact (my-conj [0] 1 2 3)
+  (fact "multiple values"
+    (my-conj [0] 1 2 3)
     => [0 1 2 3]))
 
 
@@ -320,18 +406,21 @@
 ;; higher level fuctions
 ;; apply and partial
 
-;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 'apply' - explodes a seqable collection to pass to a function that expects a 'rest' param
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn my-into
-  "into defined in terms of 'apply"
+  "into defined in terms of 'conj' using 'apply"
   [collection additions]
   (apply conj collection additions))
 
-(facts "about my-into"
-  (fact (my-into [0] [1 2 3])
+(facts "about 'my-into'"
+  (fact
+    (my-into [0] [1 2 3])
     => [0 1 2 3])
-  (fact (conj [0] 1 2 3)
+  (fact "equivalent to"
+    (conj [0] 1 2 3)
     => [0 1 2 3]))
 
 (facts "'max' takes a rest argument"
@@ -341,6 +430,7 @@
   (fact  "lets' explode the arguemnt:"
     (apply max [0 1 2])
     => 2))
+
 
 ;;;;;;;;;;;;;;;;
 ;; partial - takes a function an any number of arguements and returns a new function
@@ -355,7 +445,8 @@
 (def add-missing-element
   (partial conj ["water" "earth" "air"]))
 
-(fact (add-missing-element "unobtainium" "adamantium")
+(fact
+  (add-missing-element "unobtainium" "adamantium")
   => ["water" "earth" "air" "unobtainium" "adamantium"])
 
 
@@ -365,12 +456,13 @@
     (apply partialized-fn (into more-args (reverse args)))))
 
 (def add20 (my-partial + 20))  ;; sets add20 to an anonymous function
+                               ;; returned by 'my-partial'
 
 (fact (add20 3)  => 23)
 
-;; the anonymous function as defined:
+;; the anonymous function as defined by 'my-partial':
 (fn [& more-args]
-  (apply + (into [20] more-args)))
+  (apply + (into [20] more-args)))  ; sweet!
 
 
 ;; another example:
@@ -382,11 +474,15 @@
 
 (def warn (partial lousy-logger :warn))
 
-(fact (warn "Red light ahead") => "red light ahead")
+(fact
+  (warn "Red light ahead")
+  => "red light ahead")
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; complement -
+;; Why, thank you!
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn identify-humans-1
   [social-security-numbers]
@@ -410,3 +506,6 @@
 
 (fact (my-pos? 1) => true)
 (fact (my-pos? -1) => false)
+
+
+;; see the 'FWPD' example in it's own project.

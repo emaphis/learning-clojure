@@ -2,8 +2,8 @@
   (:require [clojure.string :as s]
             [midje.sweet :refer :all]))
 
-;;(def filename  "../../../suspects.csv")
-(def filename "/home/emaphis/src/clojure/fwpd/suspects.csv")
+
+(def filename "../fwpd/suspects.csv")
 
 ;; Later on we're going to be converting each row in the CSV into a
 ;; map, like {:name "Edward Cullen" :glitter-index 10}.
@@ -16,8 +16,8 @@
   [str]
   (Integer. str))
 
-;; CSV is all text, but we're sotring numberic data. So we
-;; convet it to actual numbers.
+;; CSV is all text, but we're storing numberic data. So we
+;; convet it back to actual numbers.
 (def conversions {:name identity
                   :glitter-index str->int})
 
@@ -54,24 +54,28 @@
   (filter #(>= (:glitter-index %) minimum-glitter) records))
 
 (defn list-of-names
+  "return a list of names given a list of suspect maps"
   [data]
   (map :name data))
 
-(fact (list-of-names (glitter-filter 3 (mapify (parse (slurp filename)))))
-  => '("Edward Cullen" "Jacob Black" "Carlisle Cullen"))
-
-
 (defn prepend
-  [name glitter-index lst]
-  (conj lst [:name name :glitter-index glitter-index]))
+  [name glitter-index data]
+  (conj data {:name name :glitter-index glitter-index}))
 
-(fact (prepend "Joe Blow" 5 (mapify (parse (slurp filename))))
-  => '([:name "Joe Blow" :glitter-index 5]
-       {:name "Edward Cullen", :glitter-index 10}
-       {:name "Bella Swan", :glitter-index 0}
-       {:name "Charlie Swan", :glitter-index 0}
-       {:name "Jacob Black", :glitter-index 3}
-       {:name "Carlisle Cullen", :glitter-index 6}))
+(def keywords [:name :glitter-index])
+
+(defn validate?
+  [keywords record]
+  (every? #(not (nil? %)) (map #(get record %) keywords)))
+
+;; wow! two lambdas in one function
+
+(defn add-record
+  [rec data]
+  (if (validate? keywords rec)
+    (prepend (:name rec) (:glitter-index rec) data)
+    data))
+
 
 
 (defn -main

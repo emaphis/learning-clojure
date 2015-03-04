@@ -528,3 +528,110 @@
 
 
 ;; see hobbit.clj for hobbit example
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; let
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(fact "about let"
+  (let [x 3]
+  x)
+  => 3)
+
+(fact "about dalmations"
+  (def dalmatian-list
+    ["Pongo" "Perdita" "Puppy 1" "Puppy 2"]) ; and 97 more...
+  (let [dalmatians (take 2 dalmatian-list)]
+    dalmatians)
+  => '("Pongo" "Perdita"))
+
+(fact "'let' introduces a new scope"
+  (def x 0)
+  (let [x 1] x)
+  => 1)
+
+(fact "you can reference existing bindings in your let binding:"
+  (def x 0)
+  (let [x (inc x)] x)
+  => 1)
+
+(fact "You can also use rest-params in let, just like you can in functions:"
+  (let [[pongo & dalmatians] dalmatian-list]
+    [pongo dalmatians])
+  => ["Pongo" '("Perdita" "Puppy 1" "Puppy 2")])
+
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; loop
+;;;;;;;;;;;;;;;;;;;;;;
+(fact "'loop' provides another way to do recursion in Clojure.
+        Let's look at a simple example:"
+  (loop [iteration 0]
+    (println (str "Iteration " iteration))
+    (if (> iteration 3)
+      (println "Goodbye!")
+      (recur (inc iteration))))
+  => nil)
+;;Iteration 0
+;;Iteration 1
+;;Iteration 2
+;;Iteration 3
+;;Iteration 4
+;;Goodbye!
+
+(fact "You could in fact accomplish the same thing just using functions:"
+  (defn recursive-printer
+    ([]
+     (recursive-printer 0))
+    ([iteration]
+     (println iteration)
+     (if (> iteration 3)
+       (println "Goodbye!")
+       (recursive-printer (inc iteration)))))
+  (recursive-printer)
+  => nil)
+;;Iteration 0
+;;Iteration 1
+;;Iteration 2
+;;Iteration 3
+;;Iteration 4
+;;Goodbye!
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;; reduce
+;;;;;;;;;;;;;;;;;;;;;;;
+
+(facts "about reduce"
+
+  (fact "sum with reduce"
+    (reduce + [1 2 3 4])
+    => 10)
+
+  (fact "same as"
+    (+ (+ (+ 1 2) 3) 4)
+    => 10)
+
+  (fact "Reduce also takes an optional initial value"
+    (reduce + 15 [1 2 3 4])
+    => 25))
+
+
+;;; one definition of 'reduce'
+(defn my-reduce
+  ([f initial coll]
+     (loop [result initial
+            remaining coll]
+       (let [[current & rest] remaining]
+         (if (empty? remaining)
+           result
+           (recur (f result current) rest)))))
+  ([f [head & tail]]
+     (my-reduce f (f head (first tail)) (rest tail))))
+
+(fact "test 'my-reduce'"
+  (my-reduce + [1 2 3 4])
+  => 10
+  (my-reduce + 15 [1 2 3 4])
+  => 25)

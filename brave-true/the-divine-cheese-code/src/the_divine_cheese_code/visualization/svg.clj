@@ -12,7 +12,8 @@
               (reduce merge
                       ;; ~~~2.1~~~
                       (map (fn [key]
-                             {key (comparison-fn (key result) (key current-map))})
+                             {key (comparison-fn (key result)
+                                                 (key current-map))})
                            keys)))
             maps)))
 
@@ -44,4 +45,27 @@
   [locations]
   (s/join " " (map latlng->point locations)))
 
+(defn line
+  [points]
+  (str "<polyline points=\"" points "\" />"))
+
+(defn transform
+  "Just chains other functions"
+  [width height locations]
+  (->> locations
+       translate-to-00
+       (scale width height)))
+
+(defn xml
+  "svg 'template' which also flips the coordinate system"
+  [width height locations]
+  (str "<svg height=\"" height "\" width=\"" width "\">"
+       ;; these two <g> tags flip the coordinate system
+       "<g transform=\"translate(0," height ")\">"
+       "<g transform=\"scale(1,-1)\">"
+       (-> (transform width height locations)
+           points
+           line)
+       "</g></g>"
+       "</svg>"))
 

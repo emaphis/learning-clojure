@@ -1,24 +1,28 @@
-;;(ns the-divine-cheese-code.visualization.svg-test
-;  (:require [midje.sweet :refer :all]
-;            ;;[the-divine-cheese-code.visualization.svg ]
- ;           ))
+(ns the-divine-cheese-code.visualization.svg-test
+ (:require [midje.sweet :refer :all]
+           [the-divine-cheese-code.visualization.svg  :exclude [min max]]
+           ))
 
-;(ns the-divine-cheese-code.svg-test
-;  (:require [midje.sweet :refer :all]
-;            [the-divine-cheese-code.visualization.svg :refer :all]))
 
-;(def ohio [{:location "Cleveland"
-;            :cheese-name "Croquis"
-;            :lat 41.50
-;            :lng -81.70}
-;           {:location "Middlefield"
-;            :cheese-name "Swiss"
-;            :lat 41.46
-;            :lng -81.06}])
+(def ohio [{:location "Cleveland"
+            :cheese-name "Croquis"
+            :lat 41.50
+            :lng -81.70}
+           {:location "Middlefield"
+            :cheese-name "Swiss"
+            :lat 41.46
+            :lng -81.06}])
 
 ;(fact "test svg/min and svg/max"
-;  (min-1 ohio) => {:lat 41.46 :lng -81.7}
-;  (max-1 ohio) => {:lat 41.5 :lng -81.06})
+; (min [{:a 1 :b 3} {:a 5 :b 0}])  => {:a 1 :b 0}
+ ; (min ohio) => {:lat 41.46 :lng -81.7}
+ ; (max ohio) => {:lat 41.5 :lng -81.06})
+
+
+(fact "example of 'merge-with'"
+  (merge-with - {:lat 50 :lng 10} {:lat 5 :lng 5})
+  => {:lat 45 :lng 5})
+
 
 
 ;(fact "latlng->point: should convert a location map to a string"

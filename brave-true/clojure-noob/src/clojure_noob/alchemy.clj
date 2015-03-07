@@ -113,6 +113,7 @@
   => 8)
 
 (fact "The 'closest' binding takes precedence:"
+
   (let [x 5]
     (let [x 6]
       (+ x 3)))
@@ -166,5 +167,111 @@
   => 1)
 
 (fact "the 'quote' special form"
+
   '(a b c)
   => (quote (a b c)))
+
+
+;;;;;;;;;;;
+;; macros
+;;;;;;;;;;;
+
+;; Exploding heads.
+
+(fact "create a list which represents infix addition:"
+
+  (read-string "(1 + 1)")
+  => '(1 + 1))
+
+(fact "but Clojure will throw an exception if you try to make it
+       evaluate this list:"
+
+  (eval (read-string "(1 + 1)"))
+  => (throws ClassCastException))
+
+(fact  "create a reorganized list that can br successfully evaluated:"
+
+  (let [infix (read-string "(1 + 1)")]
+    (list (second infix) (first infix) (last infix)))
+  => '(+ 1 1))
+
+(fact "If you eval this, then it returns 2, just like you'd expect:"
+
+  (eval
+   (let [infix (read-string "(1 + 1)")]
+     (list (second infix) (first infix) (last infix))))
+  => 2)
+
+(defn eval-infix
+  "do we really need a macro?"
+  [expression]
+  (eval
+   (let [infix (read-string expression)]
+     (list (second infix) (first infix) (last infix)))))
+
+(fact "well, what do you know"
+
+  (eval-infix "(1 + 1)")
+  => 2)
+
+(defmacro ignore-last-operand
+  [function-call]
+  (butlast function-call))
+
+(fact "we can unit test macros?"
+
+  (ignore-last-operand (+ 1 2 10))
+  => 3) ;; yes we can.
+
+
+(fact "This will not print anything"
+
+  (ignore-last-operand (+ 1 2 (println "look at me!!!")))
+  => 3)  ;; sweet
+
+(fact
+  (macroexpand '(ignore-last-operand (+ 1 2 10)))
+  => '(+ 1 2)
+
+  (macroexpand '(ignore-last-operand (+ 1 2 (println "look at me!!!"))))
+  => '(+ 1 2))
+
+(fact " read => macro-expand => eval"
+
+  (when :in-doubt "something")
+  => "something"
+
+  (macroexpand '(when :in-doubt "something"))
+  => '(if :in-doubt (do "something"))
+
+  (eval (macroexpand '(when :in-doubt "something")))
+  => "something")
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; a syntax abstraction exampe: the '->' macro
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn read-resource
+  "Read a resource into a string"
+  [path]
+  (read-string (slurp (clojure.java.io/resource path))))
+
+(defn read-resource
+  [path]
+  (-> path
+      clojure.java.io/resource
+      slurp
+      read-string))
+
+(fact "test 'read-resource"
+  (read-resource "resource.txt")
+  => 'This)
+
+(defmacro backwards
+  [form]
+  (reverse form))
+
+(fact
+  (backwards (" cowboys" "mamas don't let your babies grow up to be" str))
+  => "mamas don't let your babies grow up to be cowboys")

@@ -6,5 +6,6 @@
   :dependencies [[org.clojure/clojure "1.6.0"]]
   :main ^:skip-aot clojure-noob.core
   :target-path "target/%s"
+  :repl-options {:timeout 120000}
   :profiles {:uberjar {:aot :all}
              :dev {:dependencies [[midje "1.6.3"]]}})

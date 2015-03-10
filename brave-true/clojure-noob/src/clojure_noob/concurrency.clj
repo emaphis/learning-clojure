@@ -147,3 +147,219 @@
 ;; => "Elapsed time: 3002.132 msecs"
   => {:store "Baby Got Yak", :smoothness 99, :price 94})
 
+
+(fact "using promises and futures to run asynchronously on more than one core"
+
+  (time
+   (let [butter-promise (promise)]
+     (doseq [butter [yak-butter-international butter-than-nothing baby-got-yak]]
+       (future (if-let [satisfactory-butter (satisfactory? (mock-api-call butter))]
+                 (deliver butter-promise satisfactory-butter))))
+     (println "And the winner is:" @butter-promise)))
+
+;; => And the winner is: {:store Baby Got Yak, :smoothness 99, :price 94}
+;; => "Elapsed time: 1002.652 msecs"
+  => nil)
+
+
+(fact "registering callbacks "
+
+  (let [ferengi-wisdom-promise (promise)]
+    (future (println "Here's some Ferengi wisdom:" @ferengi-wisdom-promise))
+    (Thread/sleep 100)
+    (deliver ferengi-wisdom-promise "Whisper your way to success."))
+;; => Here's some Ferengi wisdom: Whisper your way to success.
+  => anything)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; simple queueing
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn append-to-file
+  [filename s]
+  (spit filename s :append true))
+
+(defn format-quote
+  [quote]
+  (str "=== BEGIN QUOTE ===\n" quote "=== END QUOTE ===\n\n"))
+
+(defn snag-quotes
+  [n filename]
+  (dotimes [_ n]
+    (->> (slurp "http://www.iheartquotes.com/api/v1/random")
+         format-quote
+         (append-to-file filename)
+         (future))))
+
+;;(snag-quotes 2 "quotes.txt")
+
+
+
+(defmacro enqueue
+  [q concurrent-promise-name & work]
+  (let [concurrent (butlast work)
+        serialized (last work)]
+    `(let [~concurrent-promise-name (promise)]
+       (future (deliver ~concurrent-promise-name (do ~@concurrent)))
+       (deref ~q)
+       ~serialized
+       ~concurrent-promise-name)))
+
+(defmacro wait
+  "Sleep `timeout` seconds before evaluating body"
+  [timeout & body]
+  `(do (Thread/sleep ~timeout) ~@body))
+
+(fact "out of order"
+
+  (future (wait 200 (println "'Ello, gov'na!")))
+  (future (wait 400 (println "Pip pip!")))
+  (future (wait 100 (println "Cheerio!")))
+;; => Cheerio!
+;; => 'Ello, gov'na!
+;; => Pip pip!
+  => anything)
+
+(fact "using enqueue"
+  (time @(-> (future (wait 200 (println "'Ello, gov'na!")))
+             (enqueue saying (wait 400 "Pip pip!") (println @saying))
+             (enqueue saying (wait 100 "Cheerio!") (println @saying))))
+;;'Ello, gov'na!
+;; Pip pip!
+;; Cheerio!
+;; "Elapsed time: 409.443334 msecs"
+  => "Cheerio!")
+
+;; new version
+
+(defn append-to-file
+  [filename s]
+  (spit filename s :append true))
+
+(defn format-quote
+  [quote]
+  (str "=== BEGIN QUOTE ===\n" quote "=== END QUOTE ===\n\n"))
+
+(defn random-quote
+  []
+  (format-quote (slurp "http://www.iheartquotes.com/api/v1/random")))
+
+(defmacro snag-quotes-queued
+  [n filename]
+  (let [quote-gensym (gensym)
+        queue `(enqueue ~quote-gensym
+                        (random-quote)
+                        (append-to-file ~filename @~quote-gensym))]
+    `(-> (future)
+         ~@(take n (repeat queue)))))
+
+;;(macroexpand (snag-quotes-queued 4 "quotes.txt"))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; escaping the pit of evil
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; cuddle zombies
+
+;; oo-state
+
+;; clojure - immutable state.   identity -> states
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; atoms
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def fred (atom {:cuddle-hunger-level 0
+                 :percent-deteriorated 0}))
+
+;; futures, delays, promises, atoms
+;; atoms never block.
+
+(fact "Fred's currnet state:"
+
+  @fred
+  => {:cuddle-hunger-level 0, :percent-deteriorated 0})
+
+
+(fact "how to 'log' a zombie state:"
+
+  (let [zombie-state @fred]
+    (if (>= (:percent-deteriorated zombie-state) 50)
+      (future (println (:percent-deteriorated zombie-state)))))
+  => nil)
+
+
+(fact "increase fred's cuddle humger"
+
+  (swap! fred
+       (fn [current-state]
+         (merge-with + current-state {:cuddle-hunger-level 1})))
+  => {:cuddle-hunger-level 1, :percent-deteriorated 0} )
+
+
+(fact "dereferencing fred:"
+
+  @fred
+  => {:cuddle-hunger-level 1, :percent-deteriorated 0} )
+
+
+(fact "update both 'attributes' at the same time:"
+
+  (swap! fred
+       (fn [current-state]
+         (merge-with + current-state {:cuddle-hunger-level 1
+                                      :percent-deteriorated 1})))
+  => {:cuddle-hunger-level 2, :percent-deteriorated 1} )
+
+
+
+(defn increase-cuddle-hunger-level
+  [zombie-state increase-by]
+  (merge-with + zombie-state {:cuddle-hunger-level increase-by}))
+
+
+(fact "doesn't updat state returns a new state - a function"
+
+  (increase-cuddle-hunger-level @fred 10)
+  => {:cuddle-hunger-level 12, :percent-deteriorated 1}  )
+
+
+(fact "now call 'swap!' with the additional arguments"
+
+  (swap! fred increase-cuddle-hunger-level 10)
+  => {:cuddle-hunger-level 12, :percent-deteriorated 1}
+
+  @fred
+  => {:cuddle-hunger-level 12, :percent-deteriorated 1} )
+
+
+(fact "examples of 'update-in'"
+
+  (update-in {:a {:b 3}} [:a :b] inc)
+  => {:a {:b 4}}
+
+  (update-in {:a {:b 3}} [:a :b] + 10)
+  => {:a {:b 13}} )
+
+
+(fact "use 'update-in' to change Fred's state:"
+
+  (swap! fred update-in [:cuddle-hunger-level] + 10)
+  => {:cuddle-hunger-level 22, :percent-deteriorated 1} )
+
+;; no swap!s ever get lost!
+
+
+(fact "apply serum with reset!:"
+
+  (reset! fred {:cuddle-hunger-level 0
+                :percent-deteriorated 0})
+  => {:cuddle-hunger-level 0 :percent-deteriorated 0})
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; watches and validators
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -1,6 +1,16 @@
 (ns clojure-noob.macros
   (:require [midje.sweet :refer :all]))
 
+(defmacro infix
+  "Use this macro when you're too indie for prefix notation"
+  [infixed]
+  (list (second infixed) (first infixed) (last infixed)))
+
+(fact "infix"
+
+  (infix (3 + 4))
+  => 7)
+
 
 (fact "'when' is implemented in terms of 'if' and 'do':"
   (macroexpand '(when boolean-expression

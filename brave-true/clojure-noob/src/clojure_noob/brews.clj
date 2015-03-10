@@ -1,6 +1,22 @@
 (ns clojure-noob.brews
   (require [midje.sweet :refer :all]))
 
+
+(def order-details-validations
+  {:name
+   ["Please enter a name" not-empty]
+
+   :email
+   ["Please enter an email address" not-empty
+
+    "Your email address doesn't look like an email address"
+    #(or (empty? %) (re-seq #"@" %))]})
+
+(def order-details
+  {:name "Mitchard Blimmons"
+   :email "mitchard.blimmonsgmail.com"})
+
+
 (def shipping-details-validation
   {:name
    ["Please enter a name" not-empty]
@@ -47,10 +63,7 @@
 
 
 
-
-
-
-(def shipping-details-validation
+(def shipping-details-validations
   {:name
    ["Please enter a name" not-empty]
 
@@ -95,6 +108,10 @@
   (validate {:address "123 Clinkenbeard Ct"})
   => {:name ["Please enter a name"]})
 
+(fact
+  (validate order-details order-details-validations)
+  => {:email '("Your email address doesn't look like an email address")})
+
 
 (def shipping-details
   {:name "Mitchard Blimmons"
@@ -108,12 +125,14 @@
   
   (validate shipping-details shipping-details-validations)
   =>
-  {:email ["Your email address doesn't look like an email address."]
+  {:email ["Your email address doesn't look like an email address"]
    :city ["Please enter a city"]} )
 
 
 (comment "can be used like:"
 
+  (defn render [field &] (println field))
+         
   (let [errors (validate shipping-details shipping-details-validation)]
     (if (empty? errors)
       (render :success)
@@ -146,3 +165,6 @@
             (render "shipping-details" {:errors errors}))
 
   )
+
+
+

@@ -716,4 +716,213 @@ something he can learn in no other way.
 ;; they 'do' get passed to futures.  'binding conveyance'
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; altering the 'var' root
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; intial value is root:
+(def power-source "hair")
+
+;; Clojure lets you permanently change this root value with the function
+;; 'alter-var-root':
+(alter-var-root #'power-source (fn [_] "7-eleven parking lot"))
+
+(fact
+  power-source
+  => "7-eleven parking lot")
+
+;; You especially don't want to do this to perform simple variable assignment
+;; in the same way you would in a language like Ruby or Javascript.
+
+;; You can also temporarily alter a var's root with with-redefs. This works
+;; similarly to binding, except the alteration will appear in child threads.
+(fact "for example:"
+
+  (with-redefs [*out* *out*]
+    (doto (Thread. #(println "with redefs allows me to show up in the REPL"))
+      .start
+      .join))
+
+;; with redefs allows me to show up in the REPL
+  => anything)
+
+;; agents are not covered.
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; stateless concurrency and parallelism
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+;; 'pmap'
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn always-1
+  []
+  1)
+
+(fact "now take 5:"
+
+  (take 5 (repeatedly always-1))
+  => '(1 1 1 1 1) )
+
+(fact "Lazy seq of random numbers between 0 and 9:"
+
+  (take 5 (repeatedly (partial rand-int 10)))
+  => anything
+  ;;'(1 5 0 3 4)
+  )
+
+
+(def alphabet-length 26)
+
+;; vector of chars, A-Z
+(def letters (mapv (comp str char (partial + 65)) (range alphabet-length)))
+
+(defn random-string
+  "returns a random string of specified length"
+  [length]
+  (apply str (take length (repeatedly #(rand-nth letters)))))
+
+(defn random-string-list
+  [list-length string-length]
+  (doall (take list-length (repeatedly (partial random-string string-length)))))
+
+(def orc-names (random-string-list 3000 7000))
+
+;; Use `dorun` to realize the lazy seq returned by map without
+;; printing the results in the REPL
+(time (dorun (map clojure.string/lower-case orc-names)))
+;; => "Elapsed time: 270.182 msecs"
+(time (dorun (pmap clojure.string/lower-case orc-names)))
+;; => "Elapsed time: 147.562 msecs"
+
+(def orc-name-abbrevs (random-string-list 20000 300))
+
+(time (dorun (map clojure.string/lower-case orc-name-abbrevs)))
+; => "Elapsed time: 78.23 msecs"
+(time (dorun (pmap clojure.string/lower-case orc-name-abbrevs)))
+; => "Elapsed time: 124.727 msecs"
+
+;; fix with partition
+
+(fact "partition-all takes a seq and divides it into seqs
+       of the specified length:"
+
+  (def numbers [1 2 3 4 5 6 7 8 9 10])
+
+  (partition-all 3 numbers)
+  => '((1 2 3) (4 5 6) (7 8 9) (10)) )
+
+(fact "grain of 1:"
+
+  (pmap inc numbers)
+  => '(2 3 4 5 6 7 8 9 10 11) )
+
+(fact "grain of 3:"
+
+  (pmap (fn [number-group] (doall (map inc number-group)))
+        (partition-all 3 numbers))
+  => '((2 3 4) (5 6 7) (8 9 10) (11)) )
+
+(fact "ungroup:"
+
+  (apply concat
+       (pmap (fn [number-group] (doall (map inc number-group)))
+             (partition-all 3 numbers)))
+  => '(2 3 4 5 6 7 8 9 10 11) )
+
+(defn ppmap
+  "Partitioned pmap, for grouping map ops together to make parallel
+  overhead worthwhile"
+  [grain-size f & colls]
+  (apply concat
+   (apply pmap
+          (fn [& pgroups] (doall (apply map f pgroups)))
+          (map (partial partition-all grain-size) colls))))
+
+(time (dorun (ppmap 1000 clojure.string/lower-case orc-name-abbrevs)))x
+; => "Elapsed time: 44.902 msecs"
+
+;; fun.
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; clojure.core.reducers
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+;; parallel reduce
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require '[clojure.core.reducers :as r])
+
+
+;; vector consisting of 1 through 1000000
+(def numbers (vec (range 1000000)))
+
+(time (reduce + numbers))
+"Elapsed time: 43.264 msecs"
+
+(time (r/fold + numbers))
+"Elapsed time: 23.145 msecs"
+
+;; lazy seq consisting of 1 through 1000000
+(def numbers (range 1000000))
+
+(time (reduce + numbers))
+"Elapsed time: 94.991 msecs"
+
+(time (r/fold + numbers))
+"Elapsed time: 95.237 msecs"
+
+(facts "identity values:"
+
+  (fact "addition"
+    (+) => 0)
+
+  (fact "multiplication"
+    (*) => 1)
+
+  (fact "strings"
+    (str) => "") )
+
+;; In general, you don't have anything to lose by using 'fold' instead of
+;; 'reduce'. If a collection is foldable, you'll get a performance boost.
+;; Otherwise, it's just like using 'reduce'.
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; faster collection functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def numbers (vec (range 1000000)))
+
+(time (dorun (map inc numbers)))
+"Elapsed time: 82.601 msecs"
+
+(time (dorun (into [] (r/map inc numbers))))
+"Elapsed time: 88.726 msecs"
+
+;; Returns a "collection recipe"
+(r/map inc numbers)
+
+;; Returns a new "collection recipe"
+(r/filter odd? (r/map inc numbers))
+
+;; "Bakes" recipe
+(reduce + (r/filter odd? (r/map inc numbers)))
+
+
+;; Now let's look at the performance of r/map and r/filter used together:
+
+(time (dorun (filter odd? (map inc numbers))))
+"Elapsed time: 120.625 msecs"
+
+(time (dorun (into [] (r/filter odd? (r/map inc numbers)))))
+"Elapsed time: 93.937 msecs"
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; summanry
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;  Hah! assuming I learned all of that. :-)

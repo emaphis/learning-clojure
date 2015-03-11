@@ -363,3 +363,357 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; watches and validators
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn shuffle-speed
+  [zombie]
+  (* (:cuddle-hunger-level zombie)
+     (- 100 (:percent-deteriorated zombie))))
+
+(defn shuffle-alert
+  [key watched old-state new-state]
+  (let [sph (shuffle-speed new-state)]
+    (if (> sph 5000)
+      (do
+        (println "Run, you fool!")
+        (println "The zombie's SPH is now " sph)
+        (println "This message brought to your courtesy of " key))
+      (do
+        (println "All's well with " key)
+        (println "Cuddle hunger: " (:cuddle-hunger-level new-state))
+        (println "Percent deteriorated: " (:percent-deteriorated new-state))
+        (println "SPH: " sph)))))
+
+;; General form of add-watch is (add-watch ref key watch-fn)
+(add-watch fred :fred-shuffle-alert shuffle-alert)
+
+(reset! fred {:cuddle-hunger-level 22
+              :percent-deteriorated 2})
+
+(fact
+  (swap! fred update-in [:percent-deteriorated] + 1)
+  ;; => All's well with  :fred-shuffle-alert
+  ;; => Cuddle hunger:  22
+  ;; => Percent deteriorated:  3
+  ;; => SPH:  2134
+  => {:percent-deteriorated 3, :cuddle-hunger-level 22}  )
+
+(fact
+  (swap! fred update-in [:cuddle-hunger-level] + 30)
+  ;; => Run, you fool!
+  ;; => The zombie's SPH is now  5044
+  ;; => This message brought to your courtesy of  :fred-shuffle-alert
+  => {:percent-deteriorated 3, :cuddle-hunger-level 52})
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; validators
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn percent-deteriorated-validator
+  [{:keys [percent-deteriorated]}]
+  (and (>= percent-deteriorated 0)
+       (<= percent-deteriorated 100)))
+
+(def bobby
+  (atom
+   {:cuddle-hunger-level 0 :percent-deteriorated 0}
+   :validator percent-deteriorated-validator))
+
+(fact "fail the validator"
+
+  (swap! bobby update-in [:percent-deteriorated] + 200)
+  => (throws IllegalStateException "Invalid reference state") )
+
+
+;; throw an exception with a message
+
+(defn percent-deteriorated-validator
+  [{:keys [percent-deteriorated]}]
+  (or (and (>= percent-deteriorated 0)
+           (<= percent-deteriorated 100))
+      (throw (IllegalStateException. "That's not mathy!"))))
+
+(def bobby
+  (atom
+   {:cuddle-hunger-level 0 :percent-deteriorated 0}
+   :validator percent-deteriorated-validator))
+
+(fact "exception with custom message"
+
+  (swap! bobby update-in [:percent-deteriorated] + 200)
+  => (throws IllegalStateException "That's not mathy!"))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; refs
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; modeling sock transfers
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def sock-varieties
+  #{"darned" "argyle" "wool" "horsehair" "mulleted"
+    "passive-aggressive" "striped" "polka-dotted"
+    "athletic" "business" "power" "invisible" "gollumed"})
+
+(defn sock-count
+  [sock-variety count]
+  {:variety sock-variety
+   :count count})
+
+(defn generate-sock-gnome
+  "Create an initial sock gnome state with no socks"
+  [name]
+  {:name name
+   :socks #{}})
+
+;; Here are our actual refs
+(def sock-gnome (ref (generate-sock-gnome "Barumpharumph")))
+
+(def dryer (ref {:name "LG 1337"
+                 :socks (set (map #(sock-count % 2) sock-varieties))}))
+
+(fact
+  (:socks @dryer)
+  =>
+  #{{:variety "passive-aggressive", :count 2} {:variety "power", :count 2}
+    {:variety "athletic", :count 2} {:variety "business", :count 2}
+    {:variety "argyle", :count 2} {:variety "horsehair", :count 2}
+    {:variety "gollumed", :count 2} {:variety "darned", :count 2}
+    {:variety "polka-dotted", :count 2} {:variety "wool", :count 2}
+    {:variety "mulleted", :count 2} {:variety "striped", :count 2}
+    {:variety "invisible", :count 2}})
+
+;; sock transfer
+(defn steal-sock
+  [gnome dryer]
+  (dosync
+   (when-let [pair (some #(if (= (:count %) 2) %) (:socks @dryer))]
+     (let [updated-count (sock-count (:variety pair) 1)]
+       (alter gnome update-in [:socks] conj updated-count)
+       (alter dryer update-in [:socks] disj pair)
+       (alter dryer update-in [:socks] conj updated-count)))))
+
+(steal-sock sock-gnome dryer)
+
+(fact "Your gnome may have stolen a different sock because socks are
+        stored in an unordered set"
+
+  (:socks @sock-gnome)
+  => #{{:variety "gollumed", :count 1}})
+
+
+;; Make sure all gollumed socks are accounted for
+(defn similar-socks
+  [target-sock sock-set]
+  (filter #(= (:variety %) (:variety target-sock)) sock-set))
+
+(fact
+  (similar-socks (first (:socks @sock-gnome)) (:socks @dryer))
+  => '({:variety "gollumed", :count 1}))
+
+
+(comment
+  "toy ref example:"
+
+  (def counter (ref 0))
+  (future
+    (dosync
+     (alter counter inc)
+     (println @counter)
+     (Thread/sleep 500)
+     (alter counter inc)
+     (println @counter)))
+  (Thread/sleep 250)
+  (println @counter)
+  )
+
+
+;; refs have one more trick up their suspiciously long sleeve:    :-)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; commute
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; alter:
+;; 1 reach outside the transaction and read the ref's current state
+;; 2 compare the current stat to the stat the ref started within the transaction
+;; 3 if the two differ, make the entire transaction retry
+;; 4 otherwise commit the altered ref state.
+
+;; cummute:
+;; 1 reach outside the transaction and read the ref's current state.
+;; 2 run the commute function again using the current state.
+;; 3 commit the result.
+
+(defn sleep-print-update
+  [sleep-time thread-name update-fn]
+  (fn [state]
+    (Thread/sleep sleep-time)
+    (println (str thread-name ": " state))
+    (update-fn state)))
+
+(def counter (ref 0))
+(future (dosync (commute counter (sleep-print-update 100 "Thread A" inc))))
+(future (dosync (commute counter (sleep-print-update 150 "Thread B" inc))))
+
+;;@counter
+
+
+;; unsafe commute
+
+(def receiver-a (ref #{}))
+(def receiver-b (ref #{}))
+(def giver (ref #{1}))
+
+(future (dosync (let [gift (first (seq @giver))]
+                  (Thread/sleep 10)
+                  (commute receiver-a conj gift)
+                  (commute giver disj gift))))
+
+(future (dosync (let [gift (first (seq @giver))]
+                  (Thread/sleep 15)
+                  (commute receiver-b conj gift)
+                  (commute giver disj gift))))
+;; after 15 ms...
+@receiver-a
+; => #{1}
+
+@receiver-b
+; => #{1}
+
+@giver
+; => #{}
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; vars
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;; dynamic binding
+;;;;;;;;;;;;;;;;;;;;;;;
+;; association between symbols and objects - def
+
+(def ^:dynamic *notification-address* "dobby@elf.org")
+
+(fact "you can temporarily change the value of dynamic vars by using binding"
+
+  (binding [*notification-address* "test@elf.org"]
+  *notification-address*)
+  => "test@elf.org")
+
+(fact "You can also stack bindings, just like you can with let:"
+
+(binding [*notification-address* "tester-1@elf.org"]
+  (println *notification-address*)
+  (binding [*notification-address* "tester-2@elf.org"]
+    (println *notification-address*))
+  (println *notification-address*))
+;; prints:
+;; => tester-1@elf.org
+;; => tester-2@elf.org
+;; => tester-1@elf.org
+=> nil)
+
+(println *notification-address*) ;; still the same
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; dynamic var uses
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn notify
+  [message]
+  (str "TO: " *notification-address* "\n"
+       "MESSAGE: " message))
+
+(fact "mocking:"
+
+  (notify "I fell.")
+  => "TO: dobby@elf.org\nMESSAGE: I fell." )
+
+(fact "mock but don't send spam"
+
+  (binding [*notification-address* "test@elf.org"]
+  (notify "test!"))
+  => "TO: test@elf.org\nMESSAGE: test!" )
+
+
+(binding [*out* (clojure.java.io/writer "print-output")]
+  (println "A man who carries a cat by the tail learns
+something he can learn in no other way.
+-- Mark Twain"))
+
+(fact "read redirected output"
+  (slurp "print-output")
+  => "A man who carries a cat by the tail learns \nsomething he can learn in no other way.\n-- Mark Twain\n")
+; => A man who carries a cat by the tail learns
+; => something he can learn in no other way.
+; => -- Mark Twain
+
+;; using set!
+(def ^:dynamic *troll-thought* nil)
+
+(defn troll-riddle
+  [your-answer]
+  (let [number "man meat"]
+    (when (thread-bound? #'*troll-thought*)
+      (set! *troll-thought* number))
+    (if (= number your-answer)
+      "TROLL: You can cross the bridge!"
+      "TROLL: Time to eat you, succulent human!")))
+
+
+(fact "using set!:"
+
+  (binding [*troll-thought* nil]
+    (println (troll-riddle 2))
+    (println "SUCCULENT HUMAN: Oooooh! The answer was" *troll-thought*))
+
+  ;; => TROLL: Time to eat you, succulent human!
+  ;; => SUCCULENT HUMAN: Oooooh! The answer was man meat
+  => nil)
+
+(fact  "The var returns to its original value outside of binding:"
+
+  *troll-thought*
+  => nil)
+
+(fact "correct answer"
+
+  (troll-riddle "man meat")
+  => "TROLL: You can cross the bridge!")
+
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;; per-thread binding
+;;;;;;;;;;;;;;;;;;;;;;
+
+;; the REPL
+;; (binding [*out* repl-printr]
+;;     your-code .....)
+
+(fact " prints out to repl:"
+
+  (.write *out* "prints out to repl")
+  => nil)  ;; and it does.
+
+
+(fact "doesn't print output to repl because *out* is not bound to repl printer:"
+
+  (.start (Thread. #(.write *out* "prints to start out")))
+  => nil )
+
+
+(fact "You can work around this, though, with this goofy code:"
+
+  (let [out *out*]
+    (.start
+     (Thread. #(binding [*out* out]
+                 (.write *out* "prints to repl from thread")))))
+  => nil )
+
+;; bindings don't get passed to manually created threads.
+;; they 'do' get passed to futures.  'binding conveyance'
+
+
+

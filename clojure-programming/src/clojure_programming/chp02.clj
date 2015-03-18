@@ -329,7 +329,7 @@ Logging to a memory buffer:"
 (facts
   (fact (retained-logger "hello") => nil)
   (fact (str writer)
-    => #"hello\n"))   ;test for only one "hello\n"
+    => #"hello\r\n"))   ;test for only one "hello\n"
 
 "
 logging to a file:"

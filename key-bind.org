@@ -54,3 +54,6 @@ M-( 	paredit-wrap-round, surround expression after point in parentheses
 C-→ 	Slurp; move closing parenthesis to the right to include next expression
 C-← 	Barf; move closing parenthesis to the left to exclude last expression
 C-M-f, C-M-b 	Move to the opening/closing parenthesis
+* midje
+(use 'midje.repl)
+(autotest)

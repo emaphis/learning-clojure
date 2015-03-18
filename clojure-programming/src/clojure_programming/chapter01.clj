@@ -13,7 +13,7 @@
   [numbers]
   (/ (apply + numbers) (count numbers)))
 
-	(fact (average [60 80 100 400]) => 160)
+(fact (average [60 80 100 400]) => 160)
 
 
 [[:section {:title "The Reader -- page: 12"}]]
@@ -41,10 +41,12 @@ strutures as strings
 (fact "Strings are Java strings delimited by \"\""
   "hello there" => "hello there"
 "multiline strings
-are very handy" => "multiline strings\nare very handy")
-(fact "Booleans"
+Are very handy" => "multiline strings\nAre very handy")
+
+(fact "Booleans 'true' and 'false are used to denote literal "
   true => true
   false => false)
+
 (fact "'nil' is nil or Java Null"
   (type nil) => nil)
 
@@ -53,7 +55,7 @@ are very handy" => "multiline strings\nare very handy")
 
 (facts "Unicode and octal representations use prefixes"
   (fact "\\u00ff"
-    \u00ff => \Ã¿)
+    \u00ff => \ÿ)
   (fact "\\o41"
     \o41 => \!))
 

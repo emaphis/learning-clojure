@@ -27,7 +27,7 @@
   (fact (read-string "(+ 1 2)") => '(+ 1 2)))
 
 "
-The dual of  'read-string' is 'pr-str' it prints out Clojue data
+The dual of  'read-string' is 'pr-str' it prints out Clojure data
 strutures as strings
 "
 (facts "'pr-str' is the complement of 'read-str'"
@@ -43,12 +43,13 @@ strutures as strings
 "multiline strings
 Are very handy" => "multiline strings\nAre very handy")
 
-(fact "Booleans 'true' and 'false are used to denote literal "
+(fact "Booleans 'true' and 'false are used to denote literal truth values"
   true => true
   false => false)
 
 (fact "'nil' is nil or Java Null"
-  (type nil) => nil)
+      (type nil) => nil)
+
 
 (fact "Characters literals are indicated by a backslash"
   (class \c) => java.lang.Character)
@@ -83,7 +84,8 @@ a namespace alias '::aliea/kw'.
             :location "Claremont, NH"
             ::location "42.3734, -72.3365"})
 
-(fact pizza
+(fact
+  pizza
   => {:name "Ramunto's", :clojure-programming.chapter01/location "42.3734, -72.3365", :location "Claremont, NH"})
 
 (fact "namespace denoted by '/'"
@@ -91,11 +93,14 @@ a namespace alias '::aliea/kw'.
   => "42.3734, -72.3365")
 
 (facts "namespaces and keywords"
-  (fact  (name :clojure-programming.chapter01/location)
+  (fact
+    (name :clojure-programming.chapter01/location)
     => "location")
-  (fact (namespace :clojure-programming.chapter01/location)
+  (fact
+    (namespace :clojure-programming.chapter01/location)
     => "clojure-programming.chapter01")
-  (fact (namespace :locations)
+  (fact
+    (namespace :locations)
     => nil))
 
 "
@@ -112,17 +117,18 @@ symbols:
 
 "
 page 17
-regualar expressions:
-Clojure treats strings prefixed with '#' as regualar expect literals.
+regular expressions:
+Clojure treats strings prefixed with '#' as regular expect literals.
 
 "
-(fact "class of regualar expression literal: "
+(fact "class of regular expression literal: "
   (class #"(p|h)ail") => java.util.regex.Pattern )
 
-(fact (re-seq #"(...) (...)" "foo bar")
+(fact
+  (re-seq #"(...) (...)" "foo bar")
   => '(["foo bar" "foo" "bar"]))
 
-(fact "Clojure regexs do not need escaping backslashes "
+(fact "Clojure regexp do not need escaping backslashes "
   (re-seq #"(\d+)-(\d+)" "1-3")  => '(["1-3" "1" "3"]))
 " would be (\\d+)-(\\d+) in Java"
 
@@ -158,7 +164,8 @@ So:"
     (+ x y)))
 
 "And: "
-(fact (= [1 2 3] [1, 2, 3])
+(fact "slightly pedantic:"
+  (= [1 2 3] [1, 2, 3])
   => true)
 
 
@@ -190,12 +197,12 @@ Anonymous functions - #()
 (fact (#(+ 3 %) 3) => 6)
 "
 
-var refences quotes:  (#'), prevents var from dereferencing
+var references quotes:  (#'), prevents var from dereferencing
 "
 (def var1 10)
 (fact #'var1 => #'clojure-programming.chapter01/var1)
 
-;(fact "derenfernce a var (@)"
+;(fact "dereference a var (@)"
 ;  @var1 => 10)
 
 
@@ -211,13 +218,15 @@ Vars (a reference type) are mutable storage that can hold any value.
 
 They are defined using the 'def' special form.
 "
-(fact (def x 1)
+(fact
+  (def x 1)
   => #'clojure-programming.chapter01/x)
 
-(fact "We can access th var's value using that symbol"
-  x => 1)
+(fact "We can access the var's value using that symbol"
+  x
+  => 1)
 
-(facts "We can redifine vars"
+(facts "We can redefine vars"
   (def x "hello")  => #'clojure-programming.chapter01/x
   x => "hello")
 
@@ -237,7 +246,7 @@ They are defined using the 'def' special form.
 
 "
 
-Never define 'vars' in a funtion body, only at the top level.
+Never define 'vars' in a function body, only at the top level.
 "
 
 (facts "Any symbol that names a class evaluates to that class"
@@ -288,17 +297,23 @@ Special forms have there own evaluation syntax
   ''x => '(quote x))
 
 ;TODO: fix this
-;(facts "use this for other reader sugars"
-;  (fact '@x => (clojure.core/deref x)))
+(facts "use this for other reader sugars"
+  (fact '@x => '(clojure.core/deref x)))
+
+;; '#(+ % %)
+;;=> (fn* [p1__9908127#] (+ p1__9908127# p1__9908127#))
+
+;; '`(a b ~c)
+
 
 
 [[:subsection {:title "Code Blocks: do  -- page: 25"}]]
 
-(fact "do evaluates all of it's expessions in order and yields the last"
+(fact "do evaluates all of it's expressions in order and yields the last"
   (do (println "hi")
       (+ 3 4)
       (apply * [4 5 6]))
-  ; hi
+  ;; hi
   => 120)
 
 "The steps before the last are usually executed for there side effects.
@@ -322,7 +337,7 @@ such as:"
 
 [[:subsection {:title "Defining Vars: def  --  page 26"}]]
 "
-def defines or redifines a var with an optional value in the
+def defines or redefines a var with an optional value in the
 current namespace
 "
 (facts "def'ing vars"
@@ -330,7 +345,7 @@ current namespace
   p => "foo")
 "
 (defn defn- defprotocol defonce defmacro) all use 'def' implicitly
-therefore can create or redifine vars.
+therefore can create or redefine vars.
 
 (deftype defrecord defmethod) don't define or modify vars.
 "
@@ -346,21 +361,22 @@ let binds locally scoped references, let defines locals
         y2 (* y y)]
     (Math/sqrt (+ x2 y2))))
 
-(fact (hypot 3.0 4.0)
+(fact "use 'hypot':"
+  (hypot 3.0 4.0)
   => 5.0)
 "
-let is implicitly used int 'fn' and 'defn' to bind parmeters in the
+let is implicitly used int 'fn' and 'defn' to bind parameters in the
 local scope.
 
 All locals are immutable, but you can override local bindings.
-- loop and recure are special forms that override immutability.
+- loop and recurse are special forms that override immutability.
 - reference type can be used to override immutability but have special
   semantics.
 
 Let bindings provide destructuring at.
 "
 
-[[:subsection {:title "Destructuring - let --  page 28"}]]
+[[:subsection {:title "Destructuring - (let, part 2) --  page 28"}]]
 "
 Most Clojure functions are based around sequential and map data structures.
 This allows functions and data structures to be trivially composed.
@@ -368,33 +384,36 @@ One challenge is to access$ the data in these structures.
 "
 (def v [42 "foo" 99.2 [5 12]])
 
-(facts "a couple of approaches"
-  (fact (first v) => 42)
+(facts "a couple of approaches to accessing 'v' values:"
+  (fact (first v) => 42)     ; convenience functions 'first' 'second' 'last'
   (fact (second v) => "foo")
-  (fact (last v) => [5 12])
+  (fact (last v) => [5 12])  ; pluck value using and index.
   (fact (nth v 2) => 99.2)
-  (fact (v 2) => 99.2)
-  (fact (.get v 2) => 99.2))
+  (fact (v 2) => 99.2)       ; vectors a functions of their indices
+  (fact (.get v 2) => 99.2)) ; clojure data structures implement java.util.List
 "
 'first' 'second' 'last' are standard functions for accessing
 sequential values.
 'nth' allows you to pick any value using an index.
 Vectors are functions of there indexes.
 Clojure sequential collections implement the java.util.List interface (.get)
+"
 
+"
 Accessing deeper structures are more complicated
 "
 (facts "this is complicated"
-  (fact (+ (first v) (v 2))
+  (fact
+    (+ (first v) (v 2))
     => 141.2)
-  (fact "if we need to acces values in nested collections:"
+  (fact "if we need to access values in nested collections:"
     (+ (first v) (first (last v)))
     => 47))
 "
 Clojure destructuring provides a more concise syntax
 Destructuring syntax of 'let' also works for (fn defn loop ...).
 
-Destructuring comes in two forms Sequntial and Map.
+Destructuring comes in two forms Sequential and Map.
 "
 "Sequential destructuring works with many types of collections:
   list vector seq, java.util.List (ArrayList LinkedList),
@@ -407,7 +426,7 @@ Destructuring comes in two forms Sequntial and Map.
     (+ x z))
   => 141.2)
 
-(fact "this is equivalent"
+(fact "this is equivalent using locals"
   (let [x (nth v 0)
         y (nth v 1)
         z (nth v 2)]
@@ -416,7 +435,7 @@ Destructuring comes in two forms Sequntial and Map.
 
 "Destructuring can be nested"
 
-(fact "nested destructuring"
+(fact "nested destructuring on a nested vector"
   (let [[x _ _ [y z]] v]
     (+ x y z))
   => 59)
@@ -426,12 +445,12 @@ Extra-positional sequential values
 & gathers up the rest of values that lay beyond the values in
 the destructuring form.
 "
-(fact "extra-positional"
+(fact "extra-positional using &"
   (let [[x & rest] v]
     rest)
   => '("foo" 99.2 [5 12]))
 "
-Retaining the destructured value
+Retaining the destructured value using ':as'
 "
 (fact "original vector"
   (let [[x _ z :as original-vector] v]
@@ -451,16 +470,20 @@ java.util.Map, anything that is supported by 'get' vectors Strings Arrays
         "foo" 88
          42 false})
 
-(fact (let [{a :a b :b} m]
+(fact "basic map destructuring"
+
+  (let [{a :a b :b} m]
         (+ a b))
   => 11)
 
-(facts "Keynames don't have to match"
-  (fact
+(facts "Key used for destructuring don't have to be keywords:"
+
+  (fact "a string:"
     (let [{f "foo"} m]
       (+ f 12))
     => 100)
-  (fact
+
+  (fact "a number:"
     (let [{v 42} m]
       (if v 1 0))
     => 0))
@@ -518,13 +541,13 @@ java.util.Map, anything that is supported by 'get' vectors Strings Arrays
 "=> {:sum 17, :z 3, :y 8, :x 9}"
 
 " Use ':or' to provide default values for destructuring"
-(fact "default values:"
+(fact "default values using :or"
   (let [{k :unknown x :a
          :or {k 50}} m]
     (+ k x))
   => 55)
 
-"manually setting defualits is"
+"manually setting defaults is"
 (fact "more tiring:"
   (let [{k :unknown x :a} m
         k (or k 50)]
@@ -543,17 +566,17 @@ java.util.Map, anything that is supported by 'get' vectors Strings Arrays
 
 (def chas {:name "Chas" :age 31 :location "Massachusetts"})
 
-(fact "binding values using the same names can get repetittive:"
+(fact "binding values using the same names can get repetitive:"
   (let [{name :name age :age location :location} chas]
     (format "%s is %s years old and lives in %s." name age location))
   => "Chas is 31 years old and lives in Massachusetts.")
 
-(fact "using the ':keys' option:"
+(fact "using the ':keys' option for keywords:"
   (let [{:keys [name age location]} chas]
     (format "%s is %s years old and lives in %s." name age location))
   => "Chas is 31 years old and lives in Massachusetts.")
 
-"switch when we know we are using strings or symbols as keys"
+"switch to :strs or :syms when we know we are using strings or symbols as keys"
 
 (def brian {"name" "Brian" "age" 31 "location" "British Columbia"})
 
@@ -568,6 +591,7 @@ java.util.Map, anything that is supported by 'get' vectors Strings Arrays
   (let [{:syms [name age location]} christophe]
     (format "%s is %s years old and lives in %s." name age location))
   => "Christophe is 33 years old and lives in Rhône-Alpes.")
+
 
 "Destructuring rest sequences s map key/value pairs  page: 35"
 
@@ -588,8 +612,10 @@ java.util.Map, anything that is supported by 'get' vectors Strings Arrays
 
 [[:subsection {:title "Creating Functions:fn -- page: 36"}]]
 
-"Functions are first class so Clojure can create anonymous
-functions as a data type"
+"
+Functions are first class so Clojure can create anonymous
+functions as a data type
+"
 
 (fn [x]
   (+ 10 x))
@@ -603,13 +629,14 @@ functions as a data type"
   => 18)
 
 (fact "these are equivalent:"
-  ((fn [x] (+ 10 x)) 8)
+  ((fn [x] (+ 10 x)) 8) ; 8 is bound to 'x'
   =>
   (let [x 8]
     (+ 10 x)))
 
-(fact "multiple arguments"
-  ((fn [x y z] (+ x y z)) 3 4 12)
+(fact "function with multiple arguments"
+  ((fn [x y z] (+ x y z))
+   3 4 12)
   => 19)
 
 (fact "is equivalent to this 'let' form:"
@@ -619,22 +646,27 @@ functions as a data type"
     (+ x y z))
   => 19)
 
+
 "multiple arities:   page 37"
 
 (def strange-adder (fn adder-self-reference
                      ([x] (adder-self-reference x 1))
                      ([x y] (+ x y))))
 
-(fact (strange-adder 10)
+(fact
+  (strange-adder 10)
   => 11)
 
-(fact (strange-adder 10 50)
+(fact
+  (strange-adder 10 50)
   => 60)
 
-"notice that the single arity version references it self so that it
+" each arity and body must be enclosed in it's own parentheses
+
+notice that the single arity version references it self so that it
 can call the two arity version to do its work."
 
-(fact "Mutally recursive funtions with letfn:"
+(fact "Mutually recursive functions with letfn:"
   (letfn [(odd? [n]
             (even? (dec n)))
           (even? [n]
@@ -642,21 +674,24 @@ can call the two arity version to do its work."
                 (odd? (dec n))))]
     (odd? 11))
   => true)
-
+"
+the vector consists of several 'fn' bodies with the 'fn' symbol missing
+"
 
 "
 'defn' builds on 'fn'  page: 37"
+"combines 'fn' and 'def' into one macro"
 
 (fact "these are equivalent:"
   (def strange-adder (fn strange-adder
                        ([x] (strange-adder x 1))
-                       ))
+                       ([x y] (+ x y))))
   =>
   (defn strange-adder
     ([x] (strange-adder x 1))
-    ([x y] (+ x y))))
+    ([x y] (+ x y))) )
 
-"single arity eliminates extra parantheses:"
+"single arity eliminates extra parentheses:"
 
 (fact "these are also equivalent:"
   (def redundant-adder (fn redundant-adder
@@ -680,10 +715,13 @@ into a seq:
   [x & rest]
   (apply str (butlast rest)))
 
-(fact (concat-rest 0 1 2 3 4)
+(fact
+  (concat-rest 0 1 2 3 4)
   => "123")
 
 
+"seq formed for the rest arguments can be destructured just like any other sequence
+"
 (defn make-user
   [& [user-id]]
   {:user-id (or user-id
@@ -696,7 +734,10 @@ into a seq:
   => {:user-id "Bobby"})
 
 
-"Keyword arguments"
+"Keyword arguments or defining functions that can take optional augments
+
+Built on top of the 'map destructuring of rest sequences' idiom.
+"
 
 (defn  make-usr
   [username & {:keys [email join-date]
@@ -718,6 +759,15 @@ into a seq:
       :join-date #inst "2011-01-01T05:00:00.000-00:00",
       :email "bobby@example.com",
       :exp-date #inst "2011-01-31T05:00:00.000-00:00"})
+
+"destructuring the rest argument map using types other than keywords:"
+(defn foo
+  [& {k ["m" 9]}]
+  (inc k))
+
+(fact "destructuring using a string:"
+  (foo ["m" 9] 19)
+  => 20)
 
 "
 Function literals:    page: 40"
@@ -756,7 +806,7 @@ Function literals also have rest arguments (%&):"
 [[:subsection {:title "Conditionals: if  --  page: "}]]
 
 "
-If is Clojures sole primative conditional operator.
+If is Clojures sole primitive conditional operator.
 "
 (facts "Conditionals determine logical truth to be any thing other than 'nil' or 'false"
   (fact (if "hi" \t)
@@ -777,7 +827,7 @@ Other refinements of the if conditional:
 
 when - if 'nil' should be returned or no other action should be taken with
        a false conditional.
-cond - similar to else-if alows testing of multiple conditions.
+cond - similar to else-if allows testing of multiple conditions.
 
 if-let and when-let - compositions of 'if' and 'when' and 'let'
 
@@ -791,15 +841,15 @@ to the conditionals:
   => \t)
 
 
-[[:subsection {:title "Looping: loop recure -- page: 43"}]]
+[[:subsection {:title "Looping: loop recur -- page: 43"}]]
 
 "
 Several useful imperative looping constructs (doseq and dotimes) are based on recur
-'recur' transferes control without consuming stack space.
+'recur' transfers control without consuming stack space.
 "
 
 
-(fact "a very simple coundown loop:"
+(fact "a very simple countdown loop:"
   (loop [x 5]
     (if (neg? x)
       x
@@ -819,14 +869,14 @@ Several useful imperative looping constructs (doseq and dotimes) are based on re
 Prefer the higher level 'doseq' or 'dotimes' to using 'recur'.
 When 'iterating' over a collection use the functionals 'map', 'reduce' or 'for'
 
-Because 'recur' doesn't use stack space it is preferable to use inplace of natural recursion. It also alows you to do numerics without using boxed representations.
+Because 'recur' doesn't use stack space it is preferable to use in place of natural recursion. It also allows you to do numerics without using boxed representations.
 
 "
 
 
 [[:subsection {:title "Referring to Vars: var -- page:  page: 44"}]]
 
-"Sybols name a var evaluate to that vars value:"
+"Symbols name a var evaluate to that vars value:"
 
 (def x 5)
 
@@ -846,8 +896,8 @@ Because 'recur' doesn't use stack space it is preferable to use inplace of natur
 [[:subsection {:title "Java Interop: . and new  -- page: 44"}]]
 
 "
-All Java interop (intantiation, static, instance method invocations) is based on 'new' and '.' special forms.
-Since Clojure provides reader sugar it't rare to see 'new' and '.' used.
+All Java interop (instantiation, static, instance method invocations) is based on 'new' and '.' special forms.
+Since Clojure provides reader sugar it's rare to see 'new' and '.' used.
 
 "
 
@@ -903,7 +953,7 @@ Since Clojure provides reader sugar it't rare to see 'new' and '.' used.
 
 "Exception to Clojure using immutable data.  Useful for Java interop.
 
-- Dyanmic Scope: page: 210
+- Dynamic Scope: page: 210
 - Accessing object fields: page: 359
 - deftype: page: 277
 "
@@ -952,7 +1002,7 @@ encapsulate evaluation semantics
   (eval (read-string "(average [60 80 100 400])"))
   => 160)
 
-"Example 1-4:  a reimplented Clojure REPL:"
+"Example 1-4:  a reimplemented Clojure REPL:"
 
 (defn embedded-repl
   "A naive Clojure REPL implementation. Enter ':quit' to exit."

@@ -7,17 +7,17 @@
 "Functional programming:
 - Preference of working with immutable data structures.
 - Functions as values themselves.
-- Preference for working wih declarative processing of data rather than using
+- Preference for working with declarative processing of data rather than using
   imperative control structures: do, while, for.
-- Incremental composition of functions, higher order functions an imutable data
+- Incremental composition of functions, higher order functions an immutable data
   structures to form higher level abstractions.
 "
 [[:subsection {:title "Importance of Values -- page: 52"}]]
 
 "
 Values:
- Most programming language incourage the use of mutable state. Functional lanugages
- including Clojure incourage the use of immutable values.
+ Most programming language encourage the use of mutable state. Functional languages
+ including Clojure encourage the use of immutable values.
 
 Since clojure values are immutable:
 "
@@ -32,15 +32,15 @@ Since clojure values are immutable:
       (= a 5))
     => true))
 "
-In almost all languages, numer are immutable so they can be trusted.
+In almost all languages, number are immutable so they can be trusted.
 Strings in most languages are immutable so they can be trusted as key in hash-tables.
 "
 
-[[:subsection {:title "A Ctritical Choice -- page: 58"}]]
+[[:subsection {:title "A Critical Choice -- page: 58"}]]
 "
 Immutable object state means that:
 - Mutable objects can't be passed safely to methods.
-- Mutable objects can't be reliablly used as hask keys.
+- Mutable objects can't be reliably used as hash keys.
 - Mutable objects can't be safely cached.
 - Mutable objects can't be safely used in a multi-threaded environment.
 
@@ -132,7 +132,7 @@ Reduce  applies a function to a collection producing a single value
 (fact (max (max (max 0 -3) 10) 48)
   => 48)
 
-(fact "intial seed value"
+(fact "initial seed value"
   (reduce + 50 [1 2 3 4])
   => 60)
 
@@ -140,7 +140,7 @@ Reduce  applies a function to a collection producing a single value
   (reduce + [1 2 3 4])
   => 10)
 
-(fact "using a collection a seed alows us to reduce to that type of collection"
+(fact "using a collection a seed allows us to reduce to that type of collection"
   (reduce
    (fn [m v]
      (assoc m v (* v v)))
@@ -202,7 +202,7 @@ some of the arguments returning a new function that applies to the rest.
   (fact "enumerating arguments"
     (#(map * %1 %2 %3) [1 2 3] [4 5 6] [7 8 9])
     => '(28 80 162))
-  (fact "must align wiht passed arguments"
+  (fact "must align with passed arguments"
     (#(map * %1 %2 %3) [1 2 3] [4 5 6])
     => (throws clojure.lang.ArityException))
   (fact "apply using 'rest' arguments"
@@ -219,7 +219,7 @@ some of the arguments returning a new function that applies to the rest.
 [[:section {:title "Composition of Functionality --  page: 68"}]]
 
 "
-Compositionality is the ability to build more complex things out of smaller simpler parts. Different programming languages use diffent methods of composition. Functional languages us functions.
+Compositionality is the ability to build more complex things out of smaller simpler parts. Different programming languages use different methods of composition. Functional languages us functions.
 "
 (defn negated-sum-str
   "negate a sum of some given numbers"
@@ -271,7 +271,7 @@ Compositionality is the ability to build more complex things out of smaller simp
 
 [[:subsection {:title "Writing Higher-Order Functions -- page: 71"}]]
 "
-Functional composition is one way to build abstractions, a more genral way
+Functional composition is one way to build abstractions, a more general way
 is higher-order functions
 "
 (defn adder
@@ -298,7 +298,7 @@ is higher-order functions
 (fact (double-+ 1 2 3)
   => 12)
 
-[[:subsection {:title "Primative Logging System Example -- page: 72"}]]
+[[:subsection {:title "Primitive Logging System Example -- page: 72"}]]
 
 "Use something more useful than System.out.println for error logging "
 

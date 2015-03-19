@@ -787,7 +787,7 @@ Function literals:    page: 40"
   (println (str x \^ y))'\
   (Math/pow x y))
 
-" is equivalent to:
+" the equivalent literal requires an explicit 'do':
 "
 #(do (println (str %1 \^ %2))
      (Math/pow %1 %2))
@@ -809,16 +809,21 @@ Function literals also have rest arguments (%&):"
 If is Clojures sole primitive conditional operator.
 "
 (facts "Conditionals determine logical truth to be any thing other than 'nil' or 'false"
-  (fact (if "hi" \t)
+  (fact
+    (if "hi" \t)
     => \t)
-  (fact (if 42 \t)
+  (fact
+    (if 42 \t)
     => \t )
-  (fact nil "unevaluated" \f
+  (fact
+    (if nil "unevaluated" \f)
     => \f)
-  (fact false "unevaluated" \f
+  (fact
+    (if false "unevaluated" \f)
     => \f)
-  (fact (if (not true) \t)
-    =>  nil))
+  (fact
+    (if (not true) \t)
+    =>  nil) )
 
 "If a condition is false and no else expression is provided
  the result will be 'nil'.
@@ -834,10 +839,12 @@ if-let and when-let - compositions of 'if' and 'when' and 'let'
 Clojure provides 'true?' and 'false?' predicates but they are unrelated to
 to the conditionals:
 "
-(fact (true? "string")
+(fact
+  (true? "string")
   => false)
 
-(fact (if "string" \t \t)
+(fact
+  (if "string" \t \f)
   => \t)
 
 
@@ -863,7 +870,14 @@ Several useful imperative looping constructs (doseq and dotimes) are based on re
     (do (println x)
         (recur (dec x)))))
 
-(fact (countdown 5) => :blastoff!)
+(fact
+  (countdown 5) =>
+  ;; 5
+  ;; 4
+  ;; 3
+  ;; 2
+  ;; 1
+  :blastoff!)
 
 "
 Prefer the higher level 'doseq' or 'dotimes' to using 'recur'.
@@ -880,7 +894,8 @@ Because 'recur' doesn't use stack space it is preferable to use in place of natu
 
 (def x 5)
 
-(fact x
+(fact
+  x
   => 5)
 
 (fact "reference to a 'var' itself"
@@ -893,7 +908,7 @@ Because 'recur' doesn't use stack space it is preferable to use in place of natu
 
 
 
-[[:subsection {:title "Java Interop: . and new  -- page: 44"}]]
+[[:subsection {:title "Java Interop: '.' and 'new'  -- page: 44"}]]
 
 "
 All Java interop (instantiation, static, instance method invocations) is based on 'new' and '.' special forms.
@@ -944,12 +959,12 @@ Since Clojure provides reader sugar it's rare to see 'new' and '.' used.
 "
 
 
-[[:subsection {:title "Exception Handling: try, throw -- page: 44"}]]
+[[:subsection {:title "Exception Handling: 'try', 'throw' -- page: 44"}]]
 
 "see page: 362"
 
 
-[[:subsection {:title "Special Mutation: set! -- page: 44"}]]
+[[:subsection {:title "Special Mutation: 'set'! -- page: 44"}]]
 
 "Exception to Clojure using immutable data.  Useful for Java interop.
 

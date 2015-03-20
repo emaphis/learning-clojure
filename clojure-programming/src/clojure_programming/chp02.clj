@@ -30,15 +30,16 @@ Since clojure values are immutable:
     (let [a 5]
       (+ a 3)
       (= a 5))
-    => true))
+    => true) )
 "
 In almost all languages, number are immutable so they can be trusted.
 Strings in most languages are immutable so they can be trusted as key in hash-tables.
 "
 
+
 [[:subsection {:title "A Critical Choice -- page: 58"}]]
 "
-Immutable object state means that:
+Mutable object state means that:
 - Mutable objects can't be passed safely to methods.
 - Mutable objects can't be reliably used as hash keys.
 - Mutable objects can't be safely cached.
@@ -68,6 +69,9 @@ and they can be stored in data structures.
 123
 123
 "
+(fact
+  (call-twice inc 123)
+  => 124)
 
 "
 Java functions are complicated to use because they are tied to classes and objects:
@@ -89,7 +93,7 @@ public static void toLowerCase (List<String> strings) {
 "
 (require 'clojure.string)
 
-(facts "clojures versions are easy to call separate functions"
+(facts "clojures versions are easy to call as  objectless functions"
   (fact
     (max 5 6)
     => 6)
@@ -104,18 +108,22 @@ Some include map, reduce, partial, comp, complement, repeatedly.
 page: 62
 Map - takes a function and one or more collections returning collections with the
 functions applied to each unit:
-(map f [a b c]) => [(f a) (f b) (f c)]
+(map f [a b c]) => [(f a) (f b) (f c)] and
+(map f [a b c] [x y z]) => [(f a x) (f b y) (f c z)]
 "
+(facts "a few examples of map"
+  (fact
+    (map inc [1 2 3 4])
+    => '(2 3 4 5))
 
-(fact (map inc [1 2 3 4])
-  => '(2 3 4 5))
+  (fact
+    (map clojure.string/lower-case ["Java" "Imperative" "Weeping"
+                                    "Clojure" "Leaning" "Peace"])
+    => '("java" "imperative" "weeping" "clojure" "leaning" "peace"))
 
-(fact (map clojure.string/lower-case ["Java" "Imperative" "Weeping"
-                                      "Clojure" "Leaning" "Peace"])
-  => '("java" "imperative" "weeping" "clojure" "leaning" "peace"))
-
-(fact (map * [1 2 3 4] [5 6 7 8])
-  => '(5 12 21 32))
+  (fact
+    (map * [1 2 3 4] [5 6 7 8])
+    => '(5 12 21 32)) )
 
 "
 Differences between map and 'toLowercase':
@@ -124,13 +132,15 @@ Differences between map and 'toLowercase':
 i  and type of collection. Map aways returns a sequence.
 - We would have to worry about the imperative flow of control.
 
-Reduce  applies a function to a collection producing a single value
+Reduce  applies a function (taking two values) to a collection producing a single value
 "
-(fact (reduce max [0 -3 10 48])
-  => 48)
+(fact
+  (reduce max [0 -3 10 48])
+  => 48 )
 "similar to:"
-(fact (max (max (max 0 -3) 10) 48)
-  => 48)
+(fact
+  (max (max (max 0 -3) 10) 48)
+  => 48 )
 
 (fact "initial seed value"
   (reduce + 50 [1 2 3 4])
@@ -146,7 +156,7 @@ Reduce  applies a function to a collection producing a single value
      (assoc m v (* v v)))
    {}
    [1 2 3 4])
-  => {4 16, 3 9, 2 4, 1 1})
+  => {4 16, 3 9, 2 4, 1 1} )
 
 (fact "using a function literal"
   (reduce
@@ -173,15 +183,17 @@ entire collections in Clojure. It makes more sense core functions like 'max' or
 
 (fact "prefix with a number of arguments"
   (apply * 0.5 3 args)
-  => -60.0)
+  => -60.0 )
 
 "
 'apply' applies a function to all arguments in a sequence, 'partial' only applies
 some of the arguments returning a new function that applies to the rest.
+
+partial ::  fun args -> fun
 "
 (def only-strings (partial filter string?))
 
-(fact "partial application"
+(fact "partial application in clojure"
   (only-strings ["a" 5 "b" 6])
   => '("a" "b"))
 
@@ -189,46 +201,54 @@ some of the arguments returning a new function that applies to the rest.
   (#(filter string? %) ["a" 5 "b" 6])
   => '("a" "b"))
 
-(facts "not just limited to initial arguments"
+(facts "function literals are not just limited to initial arguments"
   (fact (#(filter % ["a" 5 "b" 6]) number?)
     => '(5 6))
   (fact (#(filter % ["a" 5 "b" 6]) string?)
     => '("a" "b")))
 
 (facts "But function literals require all arguments to be fully specified"
+
   (fact "must account for number of arguments"
     (#(map *) [1 2 3] [4 5 6] [7 8 9])
-    => (throws clojure.lang.ArityException))
+    => (throws clojure.lang.ArityException) )
+
   (fact "enumerating arguments"
     (#(map * %1 %2 %3) [1 2 3] [4 5 6] [7 8 9])
-    => '(28 80 162))
+    => '(28 80 162) )
+
   (fact "must align with passed arguments"
     (#(map * %1 %2 %3) [1 2 3] [4 5 6])
-    => (throws clojure.lang.ArityException))
+    => (throws clojure.lang.ArityException) )
+
   (fact "apply using 'rest' arguments"
     (#(apply map * %&) [1 2 3] [4 5 6] [7 8 9])
-    => '(28 80 162))
+    => '(28 80 162) )
+
   (fact "still works but duplicates what 'partial' does better"
     (#(apply map * %&) [1 2 3])
-    => '(1 2 3))
-  (fact "much better"
+    => '(1 2 3) )
+
+  (fact "much better without syntatic dificulties"
     ((partial map *) [1 2 3] [4 5 6] [7 8 9])
-    => '(28 80 162)))
+    => '(28 80 162)) )
 
 
 [[:section {:title "Composition of Functionality --  page: 68"}]]
 
 "
-Compositionality is the ability to build more complex things out of smaller simpler parts. Different programming languages use different methods of composition. Functional languages us functions.
+Compositionality is the ability to build more complex things out of smaller simpler parts. Different programming languages use different methods of composition. Functional languages use functions.
 "
 (defn negated-sum-str
-  "negate a sum of some given numbers"
+  "negate a sum of some given numbers, return a string"
   [& numbers]
   (str (- (apply + numbers))))
 
-(fact (negated-sum-str 10 12 3.4)
-  => "-25.4")
+(fact
+  (negated-sum-str 10 12 3.4)
+  => "-25.4" )
 
+"using 'comp' we can produce the same result but more concisely:"
 (def comp-negated-sum-str (comp str - +))
 
 (fact "composed version:"
@@ -236,14 +256,15 @@ Compositionality is the ability to build more complex things out of smaller simp
   => "-25.4")
 
 " (comp f g h) acts like a pipeline passing arguments from h to g to f
-
 "
 
-(fact "the resulting type of each function must be compatible with the next function"
+(fact "the resulting type of each function must be compatible with the
+       input of next function"
   ((comp + - str) 5 10)
   => (throws java.lang.ClassCastException))
 
-"Another example:"
+
+"A non toy example:"
 
 (require '[clojure.string :as str])
 
@@ -253,19 +274,26 @@ Compositionality is the ability to build more complex things out of smaller simp
                           (partial map str/lower-case)
                           #(str/split % #"(?<=[a-z])(?=[A-Z])")))
 
-(fact (camel->keyword "CamelCase")
+(fact
+  (camel->keyword "CamelCase")
   => :camel-case)
 
-(fact (camel->keyword "lowerCamelCase")
+(fact
+  (camel->keyword "lowerCamelCase")
   => :lower-camel-case)
 
-(def camel-pairs->map (comp (partial apply hash-map)
-                            (partial map-indexed (fn [i x]
-                                                   (if (odd? i)
-                                                     x
-                                                     (camel->keyword x))))))
+"
+use the 'camel->keyword' function in another composition:"
 
-(fact (camel-pairs->map ["CamelCase" 5 "lowerCamelcase" 3])
+(def camel-pairs->map
+  (comp (partial apply hash-map)
+        (partial map-indexed (fn [i x]
+                               (if (odd? i)
+                                 x
+                                 (camel->keyword x))))))
+
+(fact "now shove the camel case key into a map"
+  (camel-pairs->map ["CamelCase" 5 "lowerCamelcase" 3])
   => {:camel-case 5, :lower-camelcase 3})
 
 
@@ -275,27 +303,32 @@ Functional composition is one way to build abstractions, a more general way
 is higher-order functions
 "
 (defn adder
-  "produce a function that add a given number to it's result"
+  "produce a function that adds a given number to it's argument"
   [n]
   (fn [x] (+ n x)))
 
-(fact ((adder 5) 18)
-  => 23)
+(fact "return and apply a 5 adding function"
+  ((adder 5) 18)
+  => 23 )
 
+"as a stored value:"
 (def add5 (adder 5))
+(fact
+  (add5 18)
+  => 23 )
 
-(fact (add5 18)
-  => 23)
-
+"
+a less tivial example:"
 (defn doubler
-  "doubles the result of the given function"
+  "doubles the result of calling the given function"
   [f]
   (fn [& args]
     (* 2 (apply f args))))
 
-(def double-+ (doubler +))
+(def double-+ (doubler +)) ;; adds then doubles
 
-(fact (double-+ 1 2 3)
+(fact
+  (double-+ 1 2 3)
   => 12)
 
 [[:subsection {:title "Primitive Logging System Example -- page: 72"}]]
@@ -311,7 +344,8 @@ is higher-order functions
   "a logger that prints to standard output"
   (print-logger *out*))
 
-(fact (*out*-logger "hello")
+(fact
+  (*out*-logger "hello")
   ; hello
   => nil)
 
@@ -327,9 +361,12 @@ Logging to a memory buffer:"
   (print-logger writer))
 
 (facts
-  (fact (retained-logger "hello") => nil)
-  (fact (str writer)
-    => #"hello\r\n"))   ;test for only one "hello\n"
+  (fact
+    (retained-logger "hello")
+    => nil )
+  (fact
+    (str writer)
+    => #"hello\r\n") )   ;test for only one "hello\n"
 
 "
 logging to a file:"
@@ -400,15 +437,15 @@ to function side effects.
 (require 'clojure.xml)
 
 (defn twitter-followers
-[username]
-(->> (str "https://api.twitter.com/1/users/show.xml?screen_name=" username)
-clojure.xml/parse
-:content
-(filter (comp #{:followers_count} :tag))
-first
-:content
-first
-Integer/parseInt))
+  [username]
+  (->> (str "https://api.twitter.com/1/users/show.xml?screen_name=" username)
+       clojure.xml/parse
+       :content
+       (filter (comp #{:followers_count} :tag))
+       first
+       :content
+       first
+       Integer/parseInt))
 
 ;; (twitter-followers "ClojureBook") ;;outdated.
 

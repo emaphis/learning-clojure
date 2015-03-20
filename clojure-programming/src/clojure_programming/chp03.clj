@@ -25,67 +25,95 @@ They are immutable and persistent.
 [[:section {:title "Abstractions over Implementations --  page: 84"}]]
 
 "
-Clojures insistence on using abstractions over collections is similar to polymorphism
-and interface types in OO languages, but more general and more powerful.
+Clojures insistence on using abstractions over collections is similar to
+ polymorphism and interface types in OO languages, but more general and more
+ powerful.
 
 "
+
 (def v [1 2 3])
 
 (facts "Some operations on a vector:"
-  (fact (conj v 4)
+  (fact "'conj' add to end"
+    (conj v 4)
     => [1 2 3 4])
-  (fact (conj v 4 5)
+  (fact "... adds to end"
+    (conj v 4 5)
     => [1 2 3 4 5])
-  (fact (seq v)
-    => '(1 2 3)))
+  (fact "immutable"
+    (seq v)
+    => '(1 2 3)) )
+
 
 (def m {:a 5 :b 6})
 
 (facts "Same operations work on maps:"
-  (fact (conj m [:c 7])
-    => {:c 7, :b 6, :a 5})
-  (fact (seq m)
-    => '([:b 6] [:a 5])))
+  (fact
+    (conj m [:c 7])
+    => (contains {:c 7, :b 6, :a 5}))
+  (fact "immutable"
+    (seq m)
+    => '([:b 6] [:a 5])) )
+
 
 (def s #{1 2 3})
 
 (facts "...and sets:"
-  (fact (conj s 10)
+  (fact "unsorted"
+    (conj s 10)
     => #{1 3 2 10})
-  (fact (conj s 3 4)
+  (fact "unsorted"
+    (conj s 3 4)
     => #{1 4 3 2})
-  (fact (seq s)
+  (fact "immutable"
+    (seq s)
     => '(1 3 2)))
 
-(def lst '(1 2 3))
 
 (facts "...and lists:"
-  (fact (conj lst 0)
+  (def lst '(1 2 3))
+
+  (fact "'conj' adds to front"
+    (conj lst 0)
     => '(0 1 2 3))
-  (fact (conj lst 0 -1)
+  (fact "... adds to front"
+    (conj lst 0 -1)
     => '(-1 0 1 2 3))
-  (fact (seq lst)
+  (fact "immuatable"
+    (seq lst)
     => '(1 2 3)))
 
 "
-'conj' and 'seq' provide a polymorphic and general interface to the collections. 'Conj' add an item to the collection in the most efficient way for that collection. The front
-lists and the end of vectors for instance. 'Seq' provides a common view over collections. This provides a small interface that can be used to build other functions.
+'conj' and 'seq' provide a polymorphic and general interface to the collections.
+'conj' adds an item to the collection in the most efficient way for that
+ collection. The front of lists and the end of vectors for instance.
+'Seq' provides a common view over collections. This provides a small interface
+ that can be used to build other functions.
+
+'into' is built on top of 'seq' and 'conj' so it works on the same collections
 "
 
 (facts "for example 'into':"
-  (fact (first '((1 2 3) 4 5 6))
+  (fact
+    (first '((1 2 3) 4 5 6))
     => '(1 2 3))
-  (fact (into v [4 5])
+  (fact
+    (into v [4 5])
     => [1 2 3 4 5])
-  (fact (into m [[:c 7] [:d 8]])
+  (fact
+    (into m [[:c 7] [:d 8]])
     => {:c 7, :b 6, :d 8, :a 5})
-  (fact (into #{1 2} [2 3 4 5 3 3 2])
+  (fact
+    (into #{1 2} [2 3 4 5 3 3 2])
     => #{1 4 3 2 5})
-  (fact (into [1] {:a 1 :b 2})
-    => [1 [:b 2] [:a 1]]))
+  (fact
+    (into [1] {:a 1 :b 2})
+    => [1 [:b 2] [:a 1]]) )
 
 "
-A concrete implementation doesn't have to implement the full abstraction to be useful.
+A concrete implementation doesn't have to implement the full abstraction to be
+useful, for instance the clojure collections don't implement Java's mutable
+interfaces.
 
 There seven primary abstractions that Clojures data structures implement:
 - Collection
@@ -97,7 +125,7 @@ There seven primary abstractions that Clojures data structures implement:
 - Sorted
 "
 
-[[:subsection {:title "Collection --  page: 87"}]]
+[[:subsection {:title "Collection Abstraction --  page: 87"}]]
 
 "
 All data structures implement the 'collection' abstraction:
@@ -105,16 +133,20 @@ All data structures implement the 'collection' abstraction:
 - 'seq' to get the sequence interface of a collection.
 - 'count' to get the number of item in a collection.
 - 'empty' to get an empty instance of the collection.
-- = to determine the value equality of the collection.
+- '=' to determine the value equality of the collection.
 
 Each of these operations are polymorphic on the collection and maintain the
 collections semantics.
 "
+"'conj' appends the item in the most efficient order."
+
 (facts "conj prepends items to lists:"
-  (fact (conj '(1 2 3) 4)
+  (fact
+    (conj '(1 2 3) 4)
     => '(4 1 2 3))
-  (fact (into '(1 2 4) [:a :b :c])
-    => '(:c :b :a 1 2 4)))
+  (fact "'into' is implemented in terms of 'conj'"
+    (into '(1 2 4) [:a :b :c])
+    => '(:c :b :a 1 2 4)) )
 
 "
 empty - allows you to write generic collection code not knowing up front what
@@ -128,53 +160,62 @@ data type the collection is:"
          (take-nth 2 (drop 1 sequential))
          (take-nth 2 sequential))))
 
-(fact (swap-pairs (apply list (range 10)))
-  => '(8 9 6 7 4 5 2 3 0 1))
+(fact "so, it works with lists."
+  (swap-pairs (apply list (range 10)))
+  => '(8 9 6 7 4 5 2 3 0 1) )
 
-(fact (swap-pairs (apply vector (range 10)))
-  => [1 0 3 2 5 4 7 6 9 8])
+(fact "... and vectors."
+  (swap-pairs (apply vector (range 10)))
+  => [1 0 3 2 5 4 7 6 9 8] )
 
-"swap-pairs return type is the same as it's argument
+"swap-pairs return type is the same as it's argument because of empty
 
-also works with 'map types:
+'empty' also works with 'map' types:
 "
 
 (defn map-map
-  "maps a given function over every item in a map"
+  "maps a given function over every value in a map"
   [fun mp]
   (into (empty mp)
-        (for [[k v] mp]
+        (for [[k v] mp]   ; 'for' is a list comprehension form.
           [k (fun v)])))
 
-(fact (map-map inc (hash-map :z 5 :c 6 :a 0))
+(fact "maps 'inc' over the values of a map"
+  (map-map inc (hash-map :z 5 :c 6 :a 0))
   => {:z 6, :c 7, :a 1})
 
-(fact (map-map inc (sorted-map :z 5 :c 6 :a 0))
+(fact
+  (map-map inc (sorted-map :z 5 :c 6 :a 0))
   => {:a 1, :c 7, :z 6})
 
 
 "
 'count' - indicates the number of items in the collection.
 "
-(fact "number of items:"
-  (fact (count [1 2 3])
+(fact "number of items in the collection:"
+  (fact "vector"
+    (count [1 2 3])
     => 3)
-  (fact (count {:a 1 :b 2 :c 3})
+  (fact "map"
+    (count {:a 1 :b 2 :c 3})
     => 3)
-  (fact (count #{1 2 3})
+  (fact "set"
+    (count #{1 2 3})
     => 3)
-  (fact (count '(1 2 3))
-    => 3))
+  (fact "list"
+    (count '(1 2 3))
+    => 3) )
 "
-Count also works on Java collections ans Strings."
+Count also works on Java collections and Strings."
 
 
-[[:subsection {:title "Sequences --  page: 89"}]]
+[[:subsection {:title "Sequences Abstraction --  page: 89"}]]
 "
-'sequence' is an abstraction that defines an interface for traversing a collection
-or some computation.
+'sequence' is an abstraction that defines an interface for obtaining or
+ traversing a sequential view of a collection or successive values of some
+ computation.
 
-They involve a few operations:
+They involve a few operations over the collection interface:
 "
 "
 - 'seq' produces a sequence over it's argument.
@@ -187,51 +228,72 @@ clojure.lang.Seq.
 
 "
 (facts "some examples:"
-  (fact (seq "Clojure")
+  (fact "a string"
+    (seq "Clojure")
     => '(\C \l \o \j \u \r \e))
-  (fact (seq {:a 5 :b 6})
+  (fact "a map"
+    (seq {:a 5 :b 6})
     => '([:b 6] [:a 5]))
-  (fact (seq (java.util.ArrayList. (range 5)))
+  (fact "a Java array list"
+    (seq (java.util.ArrayList. (range 5)))
     => '(0 1 2 3 4))
-  (fact (seq (into-array ["Clojure" "Programming"]))
+  (fact "array"
+    (seq (into-array ["Clojure" "Programming"]))
     => '("Clojure" "Programming"))
-  (fact (seq [])
+  (fact "the 'seq' of 'nil' or empty collection is 'nil'..."
+    (seq [])
     => nil)
-  (fact (seq nil)
+  (fact "..."
+    (seq nil)
     => nil))
 
 "
-Many fucntions that work on collections call 'seq' on them implicitly:"
+Many functions that work on collections call 'seq' on them implicitly:"
 
-(fact (map str "Clojure")
+(fact "so we don't have to call 'seq' on a string to use it as a collection:"
+  (map str "Clojure")
   => '("C" "l" "o" "j" "u" "r" "e"))
-(fact (set "Programming")
+(fact
+  (set "Programming")
   => #{\a \g \i \m \n \o \P \r})
 
 "
-The fundamental operations for traversing sequences are: 'first', 'rest' and 'next:
+The fundamental operations for traversing sequences are: 'first', 'rest' and
+ 'next:
 "
-(fact (first "Clojure")
+(fact
+  (first "Clojure")
   => \C)
-(fact (rest "Clojure")
+(fact
+  (rest "Clojure")
   => '(\l \o \j \u \r \e))
-(fact (next "Clojure")
+(fact
+  (next "Clojure")
   => '(\l \o \j \u \r \e))
 
 "
-'rest' and 'next' differ on the way that they treat sequences containing 0 or 1 values:
+'rest' underlies the the implementation of variadic functions
+
+'rest' and 'next' differ on the way that they treat sequences containing 0 or 1
+ values:
 "
 (facts "'rest' vs. 'next'"
-  (fact (rest [1])
+  (fact "'rest' of collection of one item returns empty collection"
+    (rest [1])
     => '())
-  (fact (next [1])
+  (fact "'next' of collection of one item returns 'nil'"
+    (next [1])
     => nil)
-  (fact (rest nil)
+  (fact "'rest' empty collection is an empty collection"
+    (rest nil)
     => ())
-  (fact (next nil)
+  (fact "'next' of empty collection is a 'nil; "
+    (next nil)
     => nil))
 
-(fact "this identity is true"
+"'rest' returns an empty sequence, while 'next' returns a 'nil'..."
+
+(fact "... so, this identity is always true"
   (= (next ..any..)
      (seq (rest ..any..)))
   => truthy)
@@ -239,40 +301,50 @@ The fundamental operations for traversing sequences are: 'first', 'rest' and 'ne
 "
 This makes it possible to generate sequences lazily
 "
+
 "
-
-
 Sequences are not iterators:
 "
 (doseq [x (range 3)]
   (println x))
+;;=> 0
+;;=> 1
+;;=> 3
 "
-remember that the seq just created is immutable"
+remember that the seq just created is immutable, so the value can't be changed
+like mutable stateful iterators:"
 
 (let [r (range 3)
-      rst (rest r)]
+      rst (rest r)]   ;; the 'derivative' rst
   (prn (map str rst))
-  (prn (map #(+ 100 %) r))
+  (prn (map #(+ 100 %) r))  ;; 'r' is immutable
   (prn (conj r -1) (conj rst 42)))
+;;=> ("1" "2")
+;;=> (100 101 102)
+;;=> (-1 - 1 2) (42 1 2)
+
 "
 As the products returned are immutable, they can be safely reused."
 
-"
 
+"
 Sequences are not lists:
 
 - 'count' on a 'seq' can be costly.
-- contents of a 'seq' may be calculated lazily.
-- a lazy 'seq' may be infinite, therefore uncountable.
+- contents of a 'seq' may be calculated lazily and realized when they are
+   accessed.
+- the computation producing a lazy 'seq' may be infinite, therefore uncountable.
+
+lists track there length, so 'count' is cheap.
 "
 (comment
-  (fact
+  (fact "'range' produces a lazy sequence realized at access time, counting"
     (let [s (range 1e6)]
       (time (count s)))
     ;;"Elapsed time: 529.126988 msecs"
     => 1000000)
 
-  (fact
+  (fact "lists always track there length"
     (let [s (apply list (range 1e6))]
       (time (count s)))
     ;;"Elapsed time: 0.054079 msecs"
@@ -280,34 +352,49 @@ Sequences are not lists:
   )
 
 "
-You don't normally create 'seq's but you can with 'cons' and 'list*
+Creating 'seqs':
 
-'cons' takes two arguments a value that serves as the head and another collection
-that serves as the tail.
+You don't normally create 'seq's they are normally returned by functions but, but
+ you can with 'cons' and 'list*'.
+
+'cons' takes two arguments, a value that serves as the head and another
+ collection that serves as the tail.
 "
-(fact (cons 0 (range 1 5))
+(fact
+  (cons 0 (range 1 5))
   => '(0 1 2 3 4))
 "
-'cons' always prepends to it's collection even if that is inefficient:"
-(fact (cons :a [:b :c :d])
+'cons' always prepends to it's collection even if that is inefficient
+ unlike 'conj':"
+(fact "Yuck!"
+  (cons :a [:b :c :d])
   => '(:a :b :c :d))
 
 "
 'list*' produces a sequence with any number of heads:"
 
 (facts "these are equivalent:"
-  (fact (cons 0 (cons 1 (cons 2 (cons 3 (range 4 10)))))
+  (fact
+    (cons 0 (cons 1 (cons 2 (cons 3 (range 4 10)))))
     => '(0 1 2 3 4 5 6 7 8 9))
-  (fact (list* 0 1 2 3 (range 4 10))
+  (fact
+    (list* 0 1 2 3 (range 4 10))
     => '(0 1 2 3 4 5 6 7 8 9)))
 
-"'cons' and 'list* are most commonly used in macros
+"'cons' and 'list* are most commonly used in macros, where 'seq's and 'lists'
+are equivalent.
 
+"
+(fact "'list*' does not produce a list:"
+  (list? (list* 0 (range 1 5)))
+  => false )
 
+"so program to abstractions instead."
 
+"
 Lazy seqs:
 "
-(fact "lazy seqs are easy to create:"
+(fact "lazy seqs are easy to create using 'lazy-seq:"
   (lazy-seq [1 2 3])
   => '(1 2 3))
 
@@ -315,35 +402,35 @@ Lazy seqs:
   "Returns a lazy seq of random integers in the range [0,limit)]"
   [limit]
   (lazy-seq
-   (cons (rand-int limit)
-         (random-ints limit))))
+   (cons (rand-int limit)       ; return a lazy seq that's defined by 'head'
+         (random-ints limit)))) ; cons onto a lazy tail.
 
 (take 10 (random-ints 50))
 ;;  => (39 7 6 21 9 23 20 5 38 8)
 
-"Is this list lazy? Let's check:"
-
+"Is this list lazy? Let's check:
+"
 (defn random-ints
   [limit]
   (lazy-seq
-   (println "realizing random number")
+   (println "realizing random number") ;print when value is realized
    (cons (rand-int limit)
          (random-ints limit))))
 
 (def rands (take 10 (random-ints 50))) ; generate a lazy sequence of 10 units.
 
 (comment
-  (first rands)
+  (first rands)  ; force production of a lazy value
   ;; realizing random number  ; use 1
   ;; => 29
 
   (nth rands 3)
   ;;realizing random number
   ;;realizing random number
-  ;;realizing random number
+  ;;realizing random number ; use three more
   ;;=> 30
 
-  (count rands)
+  (count rands)    ; force the rest.
   ;;realizing random number
   ;;realizing random number
   ;;realizing random number
@@ -352,13 +439,24 @@ Lazy seqs:
   ;;realizing random number  ; use all
   ;;=> 10
 
-  (count rands)
+  (count rands)  ; now does not require recomputing
   ;; => 10
   )
 
+" 
+since 'cons' and 'list*' don't force realization of a values in s 'seq' these
+ functions are key to building lazy sequences.
+
+so build a sequence with concrete values 'consed' onto a lazy tail, that 
+suspends it's computation. 
+"
+"
+a simpler solution using composition of random-int and repeatedly:
+"
 (repeatedly 10 (partial rand-int 10))
 ;;  => (6 4 7 4 0 3 1 8 0 3)
 
+"'repeatedly' returns an infinite sequence given a function that produces values."
 "
 'next' can return 'nil' on an empty sequence because it realizes the next values
 checking.  'rest' returns the tail maximizing laziness.
@@ -387,6 +485,9 @@ checking.  'rest' returns the tail maximizing laziness.
 
 "
 Code defining lazy sequences should minimize side effects.
+
+lazy sequences should be considered ephemeral methods of computation and not
+a collection
 "
 
 [[:subsection {:title "Associative --  page: 99"}]]

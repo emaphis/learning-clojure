@@ -318,7 +318,7 @@ is higher-order functions
   => 23 )
 
 "
-a less tivial example:"
+a less trivial example:"
 (defn doubler
   "doubles the result of calling the given function"
   [f]
@@ -456,7 +456,7 @@ to function side effects.
 Some advantages:
 Pure functions are easier to reason about (same input - same output).
 Pure functions are easier to test (no side effects).
-Pure functions are easier to cache and parallelize (referntially transparent).
+Pure functions are easier to cache and parallelize (referentially transparent).
 "
 "cache -  memoize:"
 

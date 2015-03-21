@@ -506,15 +506,20 @@ The most used structure is the 'map'."
 (def m {:a 1, :b 2, :c 3})
 
 (facts "'assoc' and 'dissoc' are a more natural fit then 'conj' ans 'seq'"
-  (fact (get m :b)
+  (fact
+    (get m :b)
     => 2)
-  (fact (get m :d)
+  (fact "missing value"
+    (get m :d)
     => nil)
-  (fact (get m :d "not-found")
+  (fact "default value"
+    (get m :d "not-found")
     => "not-found")
-  (fact (assoc m :d 4)
+  (fact
+    (assoc m :d 4)
     => {:c 3, :b 2, :d 4, :a 1})
-  (fact (dissoc m :b)
+  (fact
+    (dissoc m :b)
     => {:c 3, :a 1}))
 
 (facts "'assoc' and 'dissoc can be used for mutiple entries"
@@ -528,58 +533,322 @@ The most used structure is the 'map'."
     (dissoc m :a :c)
     => {:b 2}))
 
+"
+associative vectors:"
 
 (def v [1 2 3])
 
 (facts "'get' and 'assoc' are supported by vectors:"
-  (fact (get v 1)
+  (fact
+    (get v 1)
     => 2)
-  (fact (get v 10)
+  (fact "missing key"
+    (get v 10)
     => nil)
-  (fact (get v 10 "not-found")
+  (fact
+    (get v 10 "not-found")
     => "not-found")
-  (fact (assoc v
-          1 4
-          0 -12
-          2 :p)
+  (fact
+    (assoc v
+           1 4
+           0 -12
+           2 :p)
     => [-12 4 :p]))
 
 (fact "can add but need to remember what the new index will be:"
   (assoc v 3 10)
-  => [1 2 3 10])
+  => [1 2 3 10])  ;; so 10 will be the 4th element.
 
-(facts "'get' works on sets - the key is the value"
-  (fact (get #{1 2 3} 2)
+(facts "'get' works on sets - where the key is present it is returned as
+        the value"
+  (fact "2nd item"
+    (get #{1 2 3} 2)
     => 2)
-  (fact (get #{1 2 3} 4)
+  (fact "missing value"
+    (get #{1 2 3} 4)
     => nil)
-  (fact (get #{1 2 3} 4 "not-found")
+  (fact "default missing value"
+    (get #{1 2 3} 4 "not-found")
     => "not-found"))
 
 
-(fact "sets can be used like a conditional\"\""
+(fact "sets values can be used like a conditional"
   (when (get #{1 2 3} 2)
     "it contains '2'!")
   => "it contains '2'!")
 
-(facts "'contains?' is a predicate that returns 'true' if a collection contains a key"
-  (fact (contains? [1 2 3] 0)
+(facts "'contains?' is a predicate that returns 'true' if a collection
+         contains a key"
+  (fact "vector"
+    (contains? [1 2 3] 0)
     => true)
-  (fact (contains? {:a 5 :b 6} :b)
+  (fact "map"
+    (contains? {:a 5 :b 6} :b)
     => true)
-  (fact (contains? {:a 5 :b 6} 42)
+  (fact "no value"
+    (contains? {:a 5 :b 6} 42)
     => false)
-  (fact (contains? #{1 2 3} 1)
+  (fact "set"
+    (contains? #{1 2 3} 1)
     => true))
 
-[[:subsection {:title "Indexed --  page: 103"}]]
+"
+'get' and 'contains' also work on Java maps, Strings and Java arrays"
 
-[[:subsection {:title "Stack --  page: 104"}]]
+(facts
+  (fact "String"
+    (get "Clojure" 3)
+    => \j)
+  (fact "Java map"
+    (contains? (java.util.HashMap.) "not-there")
+    => false)
+  (fact "Java array"
+    (get (into-array [1 2 3]) 0)
+    => 1))
 
-[[:subsection {:title "Set --  page: 105"}]]
+"
+Beware of nil values:
+"
+
+(facts "'nil' can be a valid return value"
+  (fact "missing value"
+    (get {:ethel nil} :lucy)
+    => nil)
+  (fact "nil data in the collection"
+    (get {:ethel nil} :ethel)
+    => nil))
+
+"
+using 'find' for the 'nil' value problem
+"
+(facts "using find"
+  (fact "not finding :ethel"
+    (find {:ethel nil} :lucy)
+    => nil)
+  (fact "finding :ethel"
+    (find {:ethel nil} :ethel)
+    => [:ethel nil]))
+
+"
+'find' also works with destructuring and conditional forms:
+ 'if-let' or 'when-let'
+"
+(fact "conditional"
+  (if-let [e (find {:a 5 :b 6} :a)]
+    (format "found %s => %s" (key e) (val e))
+    "not found")
+  => "found :a => 5")
+(fact "destructuring"
+  (if-let [[k v] (find {:a 5 :b 6} :a)]
+    (format "found %s => %s" k v)
+    "not found")
+  => "found :a => 5")
 
 
-[[:subsection {:title "Sorted --  page: 106"}]]
+
+[[:subsection {:title "Indexed Abstraction --  page: 103"}]]
+
+"
+'vector' index searching is rarely used. It has complexity problems,
+index arithmetic, bounds-checking, indirections.
+
+uses a single function 'nth'
+which is similar to 'get'.
+"
+
+(facts "comparing 'nth' and 'get' on vectors"
+  (fact
+    (nth [:a :b :c] 2)
+    => :c)
+  (fact
+    (get [:a :b :c] 2)
+    => :c)
+  (fact "Opps!"
+    (nth  [:a :b :c] 3)
+    => (throws IndexOutOfBoundsException))
+  (fact "Better."
+    (get [:a :b :c] 3)
+    => nil)
+  (fact "But why?"
+    (nth [:a :b :c] -1)
+    => (throws IndexOutOfBoundsException))
+  (fact "Ok"
+    (get [:a :b :c] -1)
+    => nil ))
+
+(facts "both provide for default values"
+  (fact "nth"
+    (nth [:a :b :c] -1 :not-found)
+    => :not-found)
+  (fact "get"
+    (get [:a :b :c] -1 :not-found)
+    => :not-found))
+
+"
+'nth' can only work with numberical idices and only works on things that
+are numerically indexd, vectors lists, sequences, Java arrays, Java lists,
+strings, and regular expression matchers.
+'get' is more general, and more resiliant. "
+
+(fact "'get' returns nil for things that aren't collections"
+  (get 42 3)
+  => nil)
+(fact "opps!"
+  (nth 42 0)
+  => (throws UnsupportedOperationException))
+
+(nth [:a  :b :c :d] 3.0)
+
+
+[[:subsection {:title "Stack Abstraction --  page: 104"}]]
+
+"
+A collection that supports LIFO semantics.
+
+Supported by three operations:
+'conj' pushes a value on the stack
+'pop'  obtains the stack, removes top element
+'peek' obtains top element.
+
+lists and vectors can be used as stacks
+"
+
+(facts "using a list as a stack"
+  (fact "push"
+    (conj '() 1)
+    => '(1))
+  (fact "push"
+    (conj '(2 1) 3)
+    => '(3 2 1))
+  (fact "peek"
+    (peek '(3 2 1))
+    => 3)
+  (fact "pop"
+    (pop '(3 2 1))
+    => '(2 1))
+    (fact "pop"
+      (pop '(1))
+      => '()) )
+
+(fact "Using a vector as a stack"
+  (fact "push"
+    (conj [] 1)
+    => [1])
+  (fact "push"
+    (conj [1 2] 3)
+    => [1 2 3])
+  (fact "peek"
+    (peek [1 2 3])
+    => 3)
+  (fact "pop"
+    (pop [1 2 3])
+    => [1 2])
+  (fact "pop"
+    (pop [1])
+    => []))
+"
+poping an empty stack results in error
+"
+
+
+[[:subsection {:title "Set Abstraction --  page: 105"}]]
+
+(facts "sets participate in the associative abstraction"
+  (fact
+    (get #{1 2 3} 2)
+    => 2 )
+  (fact
+    (get #{1 2 3} 4)
+    => nil )
+  (fact
+    (get #{1 2 3} 4 "not-found")
+    => "not-found" ))
+
+"
+but sets need a disjoint operator, which remove values from a set
+"
+(facts "remove items from a set"
+  (fact "one item"
+    (disj #{1 2 3} 2)
+    => #{1 3})
+  (fact "more items"
+    (disj #{1 2 3} 3 1)
+    => #{2}))
+
+"clojure.set include more highlevel set operations"
+
+
+[[:subsection {:title "Sorted abstraction --  page: 106"}]]
+"
+sorted collections ensure that the values they contain will maintain
+a sorted order depending on a predicate, or a special comparator interface.
+
+funtions: 'rseq', 'subseq', 'rsubseq'
+
+only maps and sets have sorted variants.
+"
+
+(def sm (sorted-map :z 5 :x 9 :y 0 :b 2 :a 3 :c 4))
+;;=> #'user/sm
+
+(facts "Given a sorted collection, you can use any of the abstraction’s
+        functions to query it:"
+
+  (fact "the collection..."
+    sm
+    => {:a 3, :b 2, :c 4, :x 9, :y 0, :z 5})
+  (fact "...in reverse"
+    (rseq sm)
+    => '([:z 5] [:y 0] [:x 9] [:c 4] [:b 2] [:a 3]))
+  (fact "keys less than or equal to :c"
+    (subseq sm <= :c)
+    => '([:a 3] [:b 2] [:c 4]))
+  (fact "keys > :b but less than or equal to :y"
+    (subseq sm > :b <= :y)
+    => '([:c 4] [:x 9] [:y 0]))
+  (fact "... the same but reversed"
+    (rsubseq sm > :b <= :y)
+    => '([:y 0] [:x 9] [:c 4])))
+
+"
+because 'sm' is sorted these operations are much faster than 'filter',
+'take-while' operations on 'seqs'
+'rseq' is constant time as opposed to linear
+"
+"
+the 'compare' function defines the default sorting: ascending, and can
+sort anything that implements java.lang.Comparable
+"
+(facts "compare examples"
+  (fact "equal"
+    (compare 2 2)
+    => 0)
+  (fact "less than"
+    (compare "ab" "abc")
+    => -1)
+  (fact "greater than"
+    (compare ["a" "b" "c"] ["a" "b"])
+    => 1)
+  (fact "lesser than"
+    (compare ["a" 2] ["a" 2 0])
+    => -1) )
+
+"
+Comparators and predicates to define ordering
+
+A comparator is a two argument function that returns a positive integer
+if the first argument is > than the second, a negative if the second
+arguent is greater, zero if they are equar
+
+All Clojure functions implement Comparator, so any two argument predicate
+will do
+"
+
+(sort < (repeatedly 10 #(rand-int 100)))
+;;=> (12 16 22 23 41 42 61 63 83 87)
+(sort-by first > (map-indexed vector "Clojure"))
+;;=> ([6 \e] [5 \r] [4 \u] [3 \j] [2 \o] [1 \l] [0 \C])
+
 
 [[:section {:title "Concise Collection Access --  page: 111"}]]
 
@@ -615,4 +884,5 @@ The most used structure is the 'map'."
 
 [[:section {:title "In Summary --  page: 157"}]]
 
-(fact (+ 3 4) => 7)
+(fact "really??"
+  (+ 3 4) => 7)

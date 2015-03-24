@@ -831,17 +831,17 @@ sort anything that implements java.lang.Comparable
     => 1)
   (fact "lesser than"
     (compare ["a" 2] ["a" 2 0])
-    => -1) )
+    => -1) )4
 
 "
 Comparators and predicates to define ordering
 
-A comparator is a two argument function that returns a positive integer
-if the first argument is > than the second, a negative if the second
-arguent is greater, zero if they are equar
+A comparator is a two argument function that returns a positive
+ integer if the first argument is > than the second, a negative
+ if the second arguent is greater, zero if they are equal
 
-All Clojure functions implement Comparator, so any two argument predicate
-will do
+All Clojure functions implement Comparator, so any two argument
+ predicate will do
 "
 
 (sort < (repeatedly 10 #(rand-int 100)))
@@ -849,6 +849,89 @@ will do
 (sort-by first > (map-indexed vector "Clojure"))
 ;;=> ([6 \e] [5 \r] [4 \u] [3 \j] [2 \o] [1 \l] [0 \C])
 
+(facts "'comparator' turns two-arguments in compare functions "
+  (fact
+    ((comparator <) 1 4)
+    => -1)
+  (fact
+    ((comparator <) 4 1)
+    => 1)
+  (fact ((comparator <) 4 4)
+    => 0) )
+
+(facts "using 'comp' '-' to reverse sort"
+  (fact "regular sort"
+    (sorted-map-by compare :z 5 :x 9 :y 0 :b 2 :a 3 :c 4)
+    => {:a 3, :b 2, :c 4, :x 9, :y 0, :z 5})
+  (fact "reverse sort"
+    (sorted-map-by (comp - compare) :z 5 :x 9 :y 0 :b 2 :a 3 :c 4)
+    => {:z 5, :y 0, :x 9, :c 4, :b 2, :a 3})  )
+
+"rational but surprisesing results: "
+(defn magnitude
+  [x]
+  (-> x
+      Math/log10
+      Math/floor))
+
+(fact "test magnitude"
+  (magnitude 100)
+  => 2.0
+  (magnitude 100000)
+  => 5.0)
+
+(defn compare-magnitude
+  [a b]
+  (- (magnitude a) (magnitude b)))
+
+(fact "test comparator"
+  (fact
+    ((comparator compare-magnitude) 10 10000)
+    => -1)
+  (fact
+    ((comparator compare-magnitude) 100 10)
+    => 1)
+  (fact
+    ((comparator compare-magnitude) 10 100)
+    => 0)  )
+
+(facts "use our new comparator in a sorted collection"
+  (fact "10,1000,500 have differen orders of magnatued, so they sort"
+    (def a
+      (sorted-set-by compare-magnitude 10 1000 500))
+    a => #{10 500 1000})
+  (fact "600 is a no op because it has the same order a 600"
+    (conj a 600)
+    => #{10 500 1000})
+  (fact "750 is the same order a 500 so 500 is removed"
+    (disj a 750)
+    => #{10 1000})
+  (fact "1229 is the same order as 100 so true is returned"
+    (contains? a 1239)
+    => true))
+
+"compare-magnitude rewritten to ensure that only equivalent number are
+considered equal"
+
+(defn compare-magnitude
+  [a b]
+  (let [diff (- (magnitude a) (magnitude b))]
+    (if (zero? diff)
+      (compare a b)
+      diff)))
+(facts
+  (def a
+    (sorted-set-by compare-magnitude 10 1000 500))
+  (fact
+    a => #{10 500 1000})
+  (fact
+    (conj a 600)
+    => #{10 500 600 1000})
+  (fact
+    (disj #(10 500 600 1000) 750)
+    => #{10 500 600 1000}))
+
+;; FIXME: complete
 
 [[:section {:title "Concise Collection Access --  page: 111"}]]
 

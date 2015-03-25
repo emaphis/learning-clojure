@@ -934,20 +934,243 @@ considered equal"
 ;; FIXME: complete
 
 [[:section {:title "Concise Collection Access --  page: 111"}]]
+"
+in collections most types of keys are also functions
+"
+
+(fact "using 'get'..."
+  (get [:a :b :c] 2)
+  => :c
+  (get {:a 5 :b 6} :b)
+  => 6
+  (get {:a 5 :b 6} :c 7)
+  => 7
+  (get #{1 2 3} 3)
+  >= 3 )
+
+(fact  "... is equivalent to using the collection as a function:"
+  ([:a :b :c] 2)
+  => :c
+  ({:a 5 :b 6} :b)
+  => 6
+  ({:a 5 :b 6} :c 7)
+  => 7
+  (#{1 2 3} 3)
+  => 3 )
 
 [[:subsection {:title "Idiomatic Usage --  page: 112"}]]
+"when should keyword functions be use:"
+
+
+(facts "avoiding null pointer exceptions"
+  (defn get-foo
+    [map]
+    (:foo map))
+  (fact "using keyword avoids the exception"
+    (get-foo nil)
+    => nil)
+
+  (defn get-bar
+    [map]
+    (map :bar))
+  (fact
+    (get-bar nil)
+    => (throws NullPointerException)) )
+"
+also not all collections can act as functions
+
+but if the keys are not keywords or symbols then the collection or 
+'get' or 'nth' must be used
+"
+
 
 [[:subsection {:title "Collections and Keys and Higher-Order Functions --  page: 113"}]]
 
-[[:section {:title "Data Structure Types --  page: 114"}]]
+"
+since keywords and symbols are functions they may be passed into
+higher order functions:
+"
 
+(fact "a keyword passed as a function to 'map'"
+  (map :name [{:age 21 :name "David"}
+              {:gender :f :name "Suzanne"}
+              {:name "Sara" :location "NYC"}])
+  => '("David" "Suzanne" "Sara"))
+
+(facts "'some' searches for the first values in  a sequnce that 
+         logically returns true"
+  (fact
+    (some #{1 3 7} [0  2 4 5 6])
+    => nil )
+  (fact
+    (some #{1 3 7} [0 2 3 4 5 6])) )
+
+(fact
+  (filter :age [{:age 21 :name "David"}
+                {:gender :f :name "Suzanne"}
+                {:name "Sara" :location "NYC"}])
+  => '({:age 21, :name "David"}))
+
+(fact "can 'comp' keywords with other functions:"
+  (filter (comp (partial <= 25) :age)
+          [{:age 21 :name "David"}
+           {:gender :f :name "Suzanne" :age 20}
+           {:name "Sara" :location "NYC" :age 34}])
+  => '({:age 34, :name "Sara", :location "NYC"}))
+
+(facts "beware of 'nil'"
+  (fact "ok"
+    (remove #{5 7} (cons false (range 10)))
+    => '(false 0 1 2 3 4 6 8 9))
+  (fact "not quite:"
+    (remove #{5 7 false} (cons false (range 10)))
+    => '(false 0 1 2 3 4 6 8 9))  ;; false is still there
+  (fact "use partial contains"
+    (remove (partial contains? #{5 7 false}) (cons false (range 10)))
+    => '(0 1 2 3 4 6 8 9)) )
+
+
+[[:section {:title "Data Structure Types --  page: 114"}]]
+"
+besides abstractions, we may treat the Clojure data types as their
+concrete representations.
+"
 [[:subsection {:title "Lists --  page: 114"}]]
+"
+The original type in Lisp but mustly used to represent function calls
+in Clojure.
+They are singly linked lists so they are most efficiently accesd at
+their 'head' using 'conj' 'pop', or 'rest' They don't have efficient random access. 'nth' runs in linear time. 'get' is not supported for lists. Lists are their own sequences
+"
+(fact "list literal:"
+  '(1 2 3)
+  => '(1 2 3))
+
+(fact "list literals in lists a also not evaluated:"
+  '(1 2 (+ 1 2))
+  => '(1 2 (+ 1 2)))
+
+(fact "for evaluating sublists"
+  (list 1 2 (+ 1 2))
+  => '(1 2 3))
 
 [[:subsection {:title "Vectors --  page: 115"}]]
+"
+Vectors are sequenctial data structures that support random lookup
+Vectors partiscipate in associative, indexed and stack abstractions
+"
+(fact "vectors can be created with 'vector' and 'vec'"
+  (vector 1 2 3)  ; 'vector' is the analog of 'list'
+  => '[1 2 3]
+  (vec (range 5)) ; 'vec' expects a sequectial arguement to construct
+  => [0 1 2 3 4]) ; to construct a vector.
+
+(fact "'vector?' is used to test whether a value is a vector "
+  (vector? '(1 2 3))
+  => false
+  (vector? [1 2 3])
+  => true )
+
+"
+Vectors as tuples - a common use case.
+"
+
+(defn euclidian-division
+  "return a euclidian tuple"
+  [x y]
+  [(quot x y) (rem x y)])
+
+(fact "returning multiple values from a function"
+  (euclidian-division 42 8)
+  => [5 2])
+
+(fact "simpler:"
+  ((juxt quot rem) 42 8)
+  => [5 2])
+
+(fact "using destructuring to unpack return values "
+  (let [[q r] (euclidian-division 53 7)]
+    (str "53/7 = " q " * 7 + " r))
+  => "53/7 = 7 * 7 + 4")
+"
+Use sparingly in api's:
+  tuples are hard to document the use of each index.
+  tuples are inflexible, you have to provide values for all the slots
+  and tuples are hard to extend.
+
+maps are more flexible, but vectors as tuples make sence in some
+ domains, such a points in graphics
+"
+(def point-3d [42 26 -7])
+
+(def travel-legs [["LYS" "FRA"] ["FRA" "PHL"] ["PHL" "RDU"]])
+
 
 [[:subsection {:title "Sets --  page: 117"}]]
 
+(fact "literal set notation"
+  #{1 2 3} => #{1 2 3})
+
+;(fact
+;  #{1 2 3 3}
+;  => '(throws IllegalArgumentException "Duplicate key: 3"))
+
+(fact "the 'hash-set' function creates unsorted sets"
+  (hash-set :a :b :c :d)
+  => #{:a :b :c :d})
+
+(fact "create a set from values in a collection"
+  (set [1 6 1 8 3 7 7])
+  => (contains #{1 3 6 7 8}))
+
+"
+'set' works for anything seqable giving very useful idioms, where
+sets are functions
+"
+
+(fact "remove vowels and restring"
+  (apply str (remove (set "aeiouy") "vowels are useless"))x
+  => "vwls r slss" )
+
+;; test that every is a number
+(defn numeric? [s] (every? (set "0123456789") s))
+
+(fact
+  (numeric? "123")
+  => true
+  (numeric? "42b")
+  => false)
+
 [[:subsection {:title "Maps --  page: 117"}]]
+
+(fact "the man literal"
+  {:a 5 :b 6} => {:a 5 :b 6}
+;  {:a 5 :a 5}
+;  => '(throws IllegalArgumentException)
+  )
+
+(fact "creating maps"
+  (hash-map :a 5 :b 6)
+  => {:a 5 , :b 6}
+  (apply hash-map [:a 5 :b 6])
+  => {:a 5, :b 6})
+
+(fact "keys and vals"
+  (keys m)
+  => '(:c :b :a)
+  (vals m)
+  => '(3 2 1))
+
+(fact "'keys' and 'map' are just shortcut for:"
+  (map key m)
+  => '(:c :b :a)
+  (map val m)
+  => '(3 2 1))
+
+
+
+
+
 
 [[:section {:title "Immutability and Persistence --  page: 122"}]]
 

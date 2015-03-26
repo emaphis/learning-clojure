@@ -410,12 +410,7 @@ Lazy seqs:
 
 "Is this list lazy? Let's check:
 "
-(defnure and Java collections, Java maps, Java
-CharSequences (including Strings), Java Iterables, Arrays, nil (null), anything
-clojure.lang.Seq.
-
-"
-(facts "some examples:" random-ints
+(defn random-ints
   [limit]
   (lazy-seq
    (println "realizing random number") ;print when value is realized
@@ -603,12 +598,7 @@ associative vectors:"
 (facts
   (fact "String"
     (get "Clojure" 3)
-ure and Java collections, Java maps, Java
-CharSequences (including Strings), Java Iterables, Arrays, nil (null), anything
-clojure.lang.Seq.
-
-"
-(facts "some examples:"    => \j)
+    => \j)
   (fact "Java map"
     (contains? (java.util.HashMap.) "not-there")
     => false)
@@ -920,7 +910,7 @@ All Clojure functions implement Comparator, so any two argument
     (contains? a 1239)
     => true))
 
-"compare-magnitude rewritten to ensure that only equivalent number are
+"compare-magnitude rewritten to ensure that only equivalent number range are
 considered equal"
 
 (defn compare-magnitude
@@ -928,13 +918,9 @@ considered equal"
   (let [diff (- (magnitude a) (magnitude b))]
     (if (zero? diff)
       (compare a b)
-ure and Java collections, Java maps, Java
-CharSequences (including Strings), Java Iterables, Arrays, nil (null), anything
-clojure.lang.Seq.
+      diff)))
 
-"
-(facts "some examples:"      diff)))
-(facts
+(facts "some examples:"
   (def a
     (sorted-set-by compare-magnitude 10 1000 500))
   (fact
@@ -983,14 +969,15 @@ in collections most types of keys are also functions
     (:foo map))
   (fact "using keyword avoids the exception"
     (get-foo nil)
-    => nil)
+    => nil))
 
-  (defn get-bar
-    [map]
-    (map :bar))
-  (fact
-    (get-bar nil)
-    => (throws NullPointerException)) )
+(defn get-bar
+  [map]
+  (map :bar))
+
+(fact
+  (get-bar nil)
+  => (throws NullPointerException))
 "
 also not all collections can act as functions
 
@@ -1070,12 +1057,8 @@ their 'head' using 'conj' 'pop', or 'rest' They don't have efficient random acce
   => '(1 2 3))
 
 [[:subsection {:title "Vectors --  page: 115"}]]
-ure and Java collections, Java maps, Java
-CharSequences (including Strings), Java Iterables, Arrays, nil (null), anything
-clojure.lang.Seq.
 
 "
-(facts "some examples:""
 Vectors are sequential data structures that support random lookup
 Vectors participate in associative, indexed and stack abstractions
 "
@@ -1108,12 +1091,7 @@ Vectors as tuples - a common use case.
   ((juxt quot rem) 42 8)
   => [5 2])
 
-(fact "using destructuringure and Java collections, Java maps, Java
-CharSequences (including Strings), Java Iterables, Arrays, nil (null), anything
-clojure.lang.Seq.
-
-"
-(facts "some examples:" to unpack return values "
+(fact "using destructuring to unpack return values "
   (let [[q r] (euclidean-division 53 7)]
     (str "53/7 = " q " * 7 + " r))
   => "53/7 = 7 * 7 + 4")
@@ -1168,7 +1146,7 @@ sets are functions
 
 [[:subsection {:title "Maps --  page: 117"}]]
 
-(fact "the man literal"
+(fact "the map literal"
   {:a 5 :b 6} => {:a 5 :b 6}
 ;  {:a 5 :a 5}
 ;  => '(throws IllegalArgumentException)
@@ -1313,6 +1291,7 @@ functions to do two level breakup, all orders by customer then by product.
               (assoc-in summaries ks
                         (f (get-in summaries ks init) x))))
           {} coll))
+
 (fact "now we get two level breakup"
   (reduce-by-in (juxt :customer :product)
                 #(+ %1 (:total %2)) 0 orders)
@@ -1377,7 +1356,7 @@ popping the head of a list is also a constant time operation
 (fact c => '(2 3))
 
 "
-Can maps and vectors and sets be as effiecient?
+Can maps and vectors and sets be as efficient?
 "
 
 ;; an example:
@@ -1479,12 +1458,7 @@ this is useful for implementing efficient functions that use data-structures.
   (transient-capable? '(1 2 3)) => false
   (transient-capable? #{1 2 3}) => true
   (transient-capable? {:a 1 :b 2}) => true
-  (transient-capable? [1 2 ure and Java collections, Java maps, Java
-CharSequences (including Strings), Java Iterables, Arrays, nil (null), anything
-clojure.lang.Seq.
-
-"
-(facts "some examples:"3]) => true)
+  (transient-capable? [1 2 3]) => true)
 
 "
 a persistent collection used as a transient is unaffected

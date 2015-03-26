@@ -443,12 +443,12 @@ Lazy seqs:
   ;; => 10
   )
 
-" 
+"
 since 'cons' and 'list*' don't force realization of a values in s 'seq' these
  functions are key to building lazy sequences.
 
-so build a sequence with concrete values 'consed' onto a lazy tail, that 
-suspends it's computation. 
+so build a sequence with concrete values 'consed' onto a lazy tail, that
+suspends it's computation.
 "
 "
 a simpler solution using composition of random-int and repeatedly:
@@ -498,7 +498,7 @@ It is defined by four functions:
 
 - 'assoc' creates new associations between keys and values in a collection.
 - 'dissoc' drops association for keys in the collection.
-- 'get' looks up a value in a collection. 
+- 'get' looks up a value in a collection.
 - 'contains?' a predicate that returns whether a key is in the collection.
 
 The most used structure is the 'map'."
@@ -979,7 +979,7 @@ in collections most types of keys are also functions
 "
 also not all collections can act as functions
 
-but if the keys are not keywords or symbols then the collection or 
+but if the keys are not keywords or symbols then the collection or
 'get' or 'nth' must be used
 "
 
@@ -997,7 +997,7 @@ higher order functions:
               {:name "Sara" :location "NYC"}])
   => '("David" "Suzanne" "Sara"))
 
-(facts "'some' searches for the first values in  a sequnce that 
+(facts "'some' searches for the first values in  a sequnce that
          logically returns true"
   (fact
     (some #{1 3 7} [0  2 4 5 6])
@@ -1167,20 +1167,361 @@ sets are functions
   (map val m)
   => '(3 2 1))
 
+"
+Maps as ad-hoc structs
+
+Maps a very flexible and alow data modeling even before the design
+ is nailed down.
+"
+(def playlist
+  [{:title "Elephant", :artist "The White Stripes", :year 2003}
+   {:title "Helioself", :artist "Papas Fritas", :year 1997}
+   {:title "Stories from the City, Stories from the Sea",
+    :artist "PJ Harvey", :year 2000}
+   {:title "Buildings and Grounds", :artist "Papas Fritas", :year 2000}
+   {:title "Zen Rodeo", :artist "Mardi Gras BB", :year 2002}])
+
+"
+the (:slot data) idiom
+"
+(fact "querying data agregates"
+  (map :title playlist)
+  => '("Elephant" "Helioself" "Stories from the City, Stories from the Sea" "Buildings and Grounds" "Zen Rodeo"))
+
+"associative destructuring eliminates the more verbose
+ (:slot data) access"
+(defn summarize [{:keys [title artist year]}]
+  (str title " / " artist " / " year))
+
+(summarize playlist)
+
+"other use for maps
+Maps can be used as summaries, indexes or translation tables
+"
+"
+'group-by' is useful to partition a collection using a key function
+"
+(fact "group by 3's"
+  (group-by #(rem % 3) (range 10))
+  => {0 [0 3 6 9], 1 [1 4 7], 2 [2 5 8]})
+
+(fact "group by artist"
+  (group-by :artist playlist)
+  => {"The White Stripes" [{:artist "The White Stripes", :title "Elephant", :year 2003}],
+      "Papas Fritas" [{:artist "Papas Fritas", :title "Helioself", :year 1997}
+                      {:artist "Papas Fritas", :title "Buildings and Grounds", :year 2000}],
+      "PJ Harvey" [{:artist "PJ Harvey", :title "Stories from the City, Stories from the Sea", :year 2000}],
+      "Mardi Gras BB" [{:artist "Mardi Gras BB", :title "Zen Rodeo", :year 2002}]})
+
+"indexing by two columns: (group-by (juxt :col1 :col1) data)
+
+producing a summary:
+"
+(comment "key-fn summary are place holder functions"
+  (into {} (for [[k v] (group-by key-fn coll)]
+             [k (summarize v)]))
+  )
 
 
+(defn reduce-by
+  [key-fn f init coll]
+  (reduce (fn [summaries x]
+            (let [k (key-fn x)]
+              (assoc summaries k (f (summaries k init) x))))
+          {} coll))
 
+"
+a list of purchase orders to ACME Corp, represented using plain
+maps as “structs”:"
+(def orders
+  [{:product "Clock", :customer "Wile Coyote", :qty 6, :total 300}
+   {:product "Dynamite", :customer "Wile Coyote", :qty 20, :total 5000}
+   {:product "Shotgun", :customer "Elmer Fudd", :qty 2, :total 800}
+   {:product "Shells", :customer "Elmer Fudd", :qty 4, :total 100}
+   {:product "Hole", :customer "Wile Coyote", :qty 1, :total 1000}
+   {:product "Anvil", :customer "Elmer Fudd", :qty 2, :total 300}
+   {:product "Anvil", :customer "Wile Coyote", :qty 6, :total 900}])
 
+(fact "With reduce-by, we can easily compute order totals by customer:"
+  (reduce-by :customer #(+ %1 (:total %2)) 0 orders)
+  => {"Elmer Fudd" 1200, "Wile Coyote" 7200})
+
+(fact "get customers for each product"
+  (reduce-by :product #(conj %1 (:customer %2)) #{} orders)
+  => {"Anvil" #{"Elmer Fudd" "Wile Coyote"},
+      "Hole" #{"Wile Coyote"}
+      "Shells" #{"Elmer Fudd"},
+      "Shotgun" #{"Elmer Fudd"},
+      "Dynamite" #{"Wile Coyote"},
+      "Clock" #{"Wile Coyote"}})
+
+"
+functions to do two level breakup, all orders by customer then by product.
+"
+(fn [order]
+  [(:customer order) (:product order)])
+
+#(vector (:customer %) (:product %))
+
+(fn [{:keys [customer product]}]
+  [customer product])
+
+(juxt :customer :product)
+
+(fact "using 'juxt'"
+  (reduce-by (juxt :customer :product)
+             #(+ %1 (:total %2)) 0 orders)
+  => {["Wile Coyote" "Anvil"] 900,
+      ["Elmer Fudd" "Anvil"] 300,
+      ["Wile Coyote" "Hole"] 1000,
+      ["Elmer Fudd" "Shells"] 100,
+      ["Elmer Fudd" "Shotgun"] 800,
+      ["Wile Coyote" "Dynamite"] 5000,
+      ["Wile Coyote" "Clock"] 300})
+
+"reduce-by now works with nested maps by replacing calls to 'assoc' with
+ 'assoc-in' and 'get-in'"
+(defn reduce-by-in
+  [keys-fn f init coll]
+  (reduce (fn [summaries x]
+            (let [ks (keys-fn x)]
+              (assoc-in summaries ks
+                        (f (get-in summaries ks init) x))))
+          {} coll))
+(fact "now we get two level breakup"
+  (reduce-by-in (juxt :customer :product)
+                #(+ %1 (:total %2)) 0 orders)
+  => {"Elmer Fudd" {"Anvil" 300, "Shells" 100, "Shotgun" 800},
+      "Wile Coyote" {"Anvil" 900, "Hole" 1000, "Dynamite" 5000, "Clock" 300}}
+  )
+
+"
+or we can break transform our output: "
+(def flat-breakup
+  {["Wile Coyote" "Anvil"] 900,
+   ["Elmer Fudd" "Anvil"] 300,
+   ["Wile Coyote" "Hole"] 1000,
+   ["Elmer Fudd" "Shells"] 100,
+   ["Elmer Fudd" "Shotgun"] 800,
+   ["Wile Coyote" "Dynamite"] 5000,
+   ["Wile Coyote" "Clock"] 300})
+
+(fact "... using 'assoc-in:"
+  (reduce #(apply assoc-in %1 %2) {} flat-breakup)
+  => {"Wile Coyote" {"Anvil" 900, "Hole" 1000, "Dynamite" 5000, "Clock" 300},
+      "Elmer Fudd" {"Anvil" 300, "Shotgun" 800, "Shells" 100}})
 
 [[:section {:title "Immutability and Persistence --  page: 122"}]]
 
+(def v (vec (range 1e6))) ;; a vector containing a million values
+
+(fact
+  (count v)
+  => 1000000 )
+
+(def v2 (conj v 1e6)) ; 'conj' a value to 'v'
+
+(fact "Clojures data structures are immuatable"
+  (count v)
+  => 1000000
+  (count v2)
+  => 1000001)
+
+" How does Clojure do this efficiently? "
+
 [[:subsection {:title "Persistence and Structural Sharing --  page: 123"}]]
 
+"
+Persistence is the reuse of internal datastructures in derived data.
+"
+(def a (list 1 2 3)) ; given a list
+(fact a => '(1 2 3))
+"
+'conj'ing to a list is a constant time operation.
+It: copies no data, original list is not modified, old list
+and new list share the old's structure.
+"
+(def b (conj a 0))
+(fact b => '(0 1 2 3))
+
+"
+poping the head of a list is also a constant time operation
+(it just move a pointer):
+"
+(def c (rest a))
+(fact c => '(2 3))
+
+"
+Can maps and vectors and sets be as effiecient?
+"
+
+;; an example:
+(def a1 {:a 5 :b 6 :c 7 :d 8})
+
+(fact "Let's update our map"
+  (def b1 (assoc a1 :c 0))
+
+  b1 => '{:c 0, :b 6, :d 8, :a 5}
+
+  )
+
+(fact "removing a value share structure too "
+  (def c1 (dissoc a1 :d))
+  c1 => '{:c 7, :b 6, :a 5})
+
+"
+Tangible benefits:
+
+Enabling concurrency.
+
+Free versioning.
+"
+
+(def version1 {:name "Chas" :info {:age 31}})
+
+(def version2 (update-in version1 [:info :age] + 3))
+
+(fact "versioning"
+  version1
+  => {:info {:age 31}, :name "Chas"}
+  version2
+  => {:info {:age 34}, :name "Chas"})
+"
+'update-in' updates the value identified by the vector arguement located
+in the nested structure by applying the given function and producing
+a new structure.
+"
+
 [[:subsection {:title "Transients --  page: 130"}]]
+"
+transient data structures are the opposite of pesistent.
+based on the notion if noone notices if a data structure is mutated, does
+that mutation hurt anyone?
+"
+(def x (transient []))  ; a transient vector using a persistent
+                        ; vector as a base
+(def y (conj! x 1))     ; a single value is destructively added to vector
+
+(facts
+  (fact "new vector"
+    (count y)
+    => 1)
+  (fact "old vector modified!"
+    (count x)
+    => 1))
+
+"
+this is useful for implementing efficient functions that use datastructures.
+
+"
+(fact "example 'into'"
+  (into #{} (range 5))
+  => #{0 1 4 3 2})
+
+(defn naive-into
+  [coll source]
+  (reduce conj coll source))
+
+(fact "same results"
+  (= (into #{} (range 500))
+     (naive-into #{} (range 500)))
+  => true)
+
+(time (do (into #{} (range 1e6))
+          nil))
+;;=> "Elapsed time: 5558.42672 msecs"
+
+(time (do (naive-into #{} (range 1e6))
+          nil))
+;;=> "Elapsed time: 21497.8682 msecs"
+
+(defn faster-into
+  [coll source]
+  (persistent! (reduce conj! (transient coll) source)))
+
+(time (do (faster-into #{} (range 1e6))
+          nil))
+;;=> "Elapsed time: 7073.91604 msecs"
+
+;; check if collection has transients:
+(defn transient-capable?
+  "Returns true if a transient can be obtained for the given collection.
+  i.e. tests if `(transient coll)` will succeed."
+  [coll]
+  (instance? clojure.lang.IEditableCollection coll))
+
+(fact
+  (transient-capable? '(1 2 3)) => false
+  (transient-capable? #{1 2 3}) => true
+  (transient-capable? {:a 1 :b 2}) => true
+  (transient-capable? [1 2 3]) => true)
+
+"
+a persistent collection used as a transient is unaffected
+"
+(def v [1 2])
+;;= #'user/v
+
+(def tv (transient v))
+;;= #'user/tv
+(fact
+  (conj v 3)
+  => [1 2 3])
+
+;;(persistent! tv)
+;;= [1 2]
+;;(get tv 0)
+;; TODO: work on transients later.
 
 [[:section {:title "Metadata --  page: 134"}]]
+(def a ^{:created (System/currentTimeMillis)}
+  [1 2 3])
+
+(meta a)
+;;> {:created 1427329661290}
+
+"
+meta data that contains only slots that are keywords and whose values
+are 'true' can be provided in short form and can be stack with other
+values:
+"
+(fact
+  (meta ^:private [1 2 3])
+  => {:private true}
+  (meta ^:private ^:dynamic [1 2 3])
+  => {:private true, :dynamic true})
+
+"
+'with-meta' and 'vary-meta' functions will update metadata
+"
+
+(def b (with-meta a (assoc (meta a)
+                           :modified (System/currentTimeMillis))))
+
+(meta b)
+;;=> {:modified 1427330784023, :created 1427330767808}
+
+(def b (vary-meta a assoc :modified (System/currentTimeMillis)))
+(meta b)
+;;=> {:modified 1427330819791, :created 1427330767808}
+
+(fact "meta data doesn't change values:"
+  (= a b)
+  => true
+  a => [1 2 3]
+  b => [1 2 3])
+
+(fact
+  (= ^{:a 5} 'any-value
+     ^{:b 5} 'any-value)
+  => true)
+
+(meta (conj a 500)) ;; 'modified' data keeps it's metadata
+;;=> {:created 1427331681601}
 
 [[:section {:title "Putting Clojure’s Collections to Work --  page: 136"}]]
+
+
 
 [[:subsection {:title "Identifiers and Cycles --  page: 137"}]]
 

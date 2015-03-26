@@ -18,14 +18,14 @@
 
 "
 Clojure collections are idiomatically used in terms of abstractions and not as
-concrete implementations.
+concrete implementationis.
 They are immutable and persistent.
 "
 
 [[:section {:title "Abstractions over Implementations --  page: 84"}]]
 
 "
-Clojures insistence on using abstractions over collections is similar to
+Clojure's insistence on using abstractions over collections is similar to
  polymorphism and interface types in OO languages, but more general and more
  powerful.
 
@@ -79,7 +79,7 @@ Clojures insistence on using abstractions over collections is similar to
   (fact "... adds to front"
     (conj lst 0 -1)
     => '(-1 0 1 2 3))
-  (fact "immuatable"
+  (fact "immutable"
     (seq lst)
     => '(1 2 3)))
 
@@ -115,7 +115,7 @@ A concrete implementation doesn't have to implement the full abstraction to be
 useful, for instance the clojure collections don't implement Java's mutable
 interfaces.
 
-There seven primary abstractions that Clojures data structures implement:
+There seven primary abstractions that Clojure's data structures implement:
 - Collection
 - Sequence
 - Associative
@@ -272,7 +272,7 @@ The fundamental operations for traversing sequences are: 'first', 'rest' and
   => '(\l \o \j \u \r \e))
 
 "
-'rest' underlies the the implementation of variadic functions
+'rest' underlies the implementation of variadic functions
 
 'rest' and 'next' differ on the way that they treat sequences containing 0 or 1
  values:
@@ -410,7 +410,12 @@ Lazy seqs:
 
 "Is this list lazy? Let's check:
 "
-(defn random-ints
+(defnure and Java collections, Java maps, Java
+CharSequences (including Strings), Java Iterables, Arrays, nil (null), anything
+clojure.lang.Seq.
+
+"
+(facts "some examples:" random-ints
   [limit]
   (lazy-seq
    (println "realizing random number") ;print when value is realized
@@ -522,7 +527,7 @@ The most used structure is the 'map'."
     (dissoc m :b)
     => {:c 3, :a 1}))
 
-(facts "'assoc' and 'dissoc can be used for mutiple entries"
+(facts "'assoc' and 'dissoc can be used for multiple entries"
   (fact
     (assoc m
       :x 4
@@ -598,7 +603,12 @@ associative vectors:"
 (facts
   (fact "String"
     (get "Clojure" 3)
-    => \j)
+ure and Java collections, Java maps, Java
+CharSequences (including Strings), Java Iterables, Arrays, nil (null), anything
+clojure.lang.Seq.
+
+"
+(facts "some examples:"    => \j)
   (fact "Java map"
     (contains? (java.util.HashMap.) "not-there")
     => false)
@@ -663,7 +673,7 @@ which is similar to 'get'.
   (fact
     (get [:a :b :c] 2)
     => :c)
-  (fact "Opps!"
+  (fact "Oops!"
     (nth  [:a :b :c] 3)
     => (throws IndexOutOfBoundsException))
   (fact "Better."
@@ -685,15 +695,15 @@ which is similar to 'get'.
     => :not-found))
 
 "
-'nth' can only work with numberical idices and only works on things that
-are numerically indexd, vectors lists, sequences, Java arrays, Java lists,
+'nth' can only work with numerical idices and only works on things that
+are numerically indexed, vectors lists, sequences, Java arrays, Java lists,
 strings, and regular expression matchers.
-'get' is more general, and more resiliant. "
+'get' is more general, and more resilient. "
 
 (fact "'get' returns nil for things that aren't collections"
   (get 42 3)
   => nil)
-(fact "opps!"
+(fact "oops!"
   (nth 42 0)
   => (throws UnsupportedOperationException))
 
@@ -747,7 +757,7 @@ lists and vectors can be used as stacks
     (pop [1])
     => []))
 "
-poping an empty stack results in error
+popping an empty stack results in error
 "
 
 
@@ -775,7 +785,7 @@ but sets need a disjoint operator, which remove values from a set
     (disj #{1 2 3} 3 1)
     => #{2}))
 
-"clojure.set include more highlevel set operations"
+"clojure.set include more high level set operations"
 
 
 [[:subsection {:title "Sorted abstraction --  page: 106"}]]
@@ -783,7 +793,7 @@ but sets need a disjoint operator, which remove values from a set
 sorted collections ensure that the values they contain will maintain
 a sorted order depending on a predicate, or a special comparator interface.
 
-funtions: 'rseq', 'subseq', 'rsubseq'
+functions: 'rseq', 'subseq', 'rsubseq'
 
 only maps and sets have sorted variants.
 "
@@ -838,7 +848,7 @@ Comparators and predicates to define ordering
 
 A comparator is a two argument function that returns a positive
  integer if the first argument is > than the second, a negative
- if the second arguent is greater, zero if they are equal
+ if the second argument is greater, zero if they are equal
 
 All Clojure functions implement Comparator, so any two argument
  predicate will do
@@ -867,7 +877,7 @@ All Clojure functions implement Comparator, so any two argument
     (sorted-map-by (comp - compare) :z 5 :x 9 :y 0 :b 2 :a 3 :c 4)
     => {:z 5, :y 0, :x 9, :c 4, :b 2, :a 3})  )
 
-"rational but surprisesing results: "
+"rational but surprising results: "
 (defn magnitude
   [x]
   (-> x
@@ -896,7 +906,7 @@ All Clojure functions implement Comparator, so any two argument
     => 0)  )
 
 (facts "use our new comparator in a sorted collection"
-  (fact "10,1000,500 have differen orders of magnatued, so they sort"
+  (fact "10,1000,500 have different orders of magnitude, so they sort"
     (def a
       (sorted-set-by compare-magnitude 10 1000 500))
     a => #{10 500 1000})
@@ -918,7 +928,12 @@ considered equal"
   (let [diff (- (magnitude a) (magnitude b))]
     (if (zero? diff)
       (compare a b)
-      diff)))
+ure and Java collections, Java maps, Java
+CharSequences (including Strings), Java Iterables, Arrays, nil (null), anything
+clojure.lang.Seq.
+
+"
+(facts "some examples:"      diff)))
 (facts
   (def a
     (sorted-set-by compare-magnitude 10 1000 500))
@@ -997,7 +1012,7 @@ higher order functions:
               {:name "Sara" :location "NYC"}])
   => '("David" "Suzanne" "Sara"))
 
-(facts "'some' searches for the first values in  a sequnce that
+(facts "'some' searches for the first values in  a sequence that
          logically returns true"
   (fact
     (some #{1 3 7} [0  2 4 5 6])
@@ -1037,9 +1052,9 @@ concrete representations.
 "
 [[:subsection {:title "Lists --  page: 114"}]]
 "
-The original type in Lisp but mustly used to represent function calls
+The original type in Lisp but mostly used to represent function calls
 in Clojure.
-They are singly linked lists so they are most efficiently accesd at
+They are singly linked lists so they are most efficiently accessed at
 their 'head' using 'conj' 'pop', or 'rest' They don't have efficient random access. 'nth' runs in linear time. 'get' is not supported for lists. Lists are their own sequences
 "
 (fact "list literal:"
@@ -1055,14 +1070,19 @@ their 'head' using 'conj' 'pop', or 'rest' They don't have efficient random acce
   => '(1 2 3))
 
 [[:subsection {:title "Vectors --  page: 115"}]]
+ure and Java collections, Java maps, Java
+CharSequences (including Strings), Java Iterables, Arrays, nil (null), anything
+clojure.lang.Seq.
+
 "
-Vectors are sequenctial data structures that support random lookup
-Vectors partiscipate in associative, indexed and stack abstractions
+(facts "some examples:""
+Vectors are sequential data structures that support random lookup
+Vectors participate in associative, indexed and stack abstractions
 "
 (fact "vectors can be created with 'vector' and 'vec'"
   (vector 1 2 3)  ; 'vector' is the analog of 'list'
   => '[1 2 3]
-  (vec (range 5)) ; 'vec' expects a sequectial arguement to construct
+  (vec (range 5)) ; 'vec' expects a sequential argument to construct
   => [0 1 2 3 4]) ; to construct a vector.
 
 (fact "'vector?' is used to test whether a value is a vector "
@@ -1075,21 +1095,26 @@ Vectors partiscipate in associative, indexed and stack abstractions
 Vectors as tuples - a common use case.
 "
 
-(defn euclidian-division
-  "return a euclidian tuple"
+(defn euclidean-division
+  "return a euclidean tuple"
   [x y]
   [(quot x y) (rem x y)])
 
 (fact "returning multiple values from a function"
-  (euclidian-division 42 8)
+  (euclidean-division 42 8)
   => [5 2])
 
 (fact "simpler:"
   ((juxt quot rem) 42 8)
   => [5 2])
 
-(fact "using destructuring to unpack return values "
-  (let [[q r] (euclidian-division 53 7)]
+(fact "using destructuringure and Java collections, Java maps, Java
+CharSequences (including Strings), Java Iterables, Arrays, nil (null), anything
+clojure.lang.Seq.
+
+"
+(facts "some examples:" to unpack return values "
+  (let [[q r] (euclidean-division 53 7)]
     (str "53/7 = " q " * 7 + " r))
   => "53/7 = 7 * 7 + 4")
 "
@@ -1098,7 +1123,7 @@ Use sparingly in api's:
   tuples are inflexible, you have to provide values for all the slots
   and tuples are hard to extend.
 
-maps are more flexible, but vectors as tuples make sence in some
+maps are more flexible, but vectors as tuples make sense in some
  domains, such a points in graphics
 "
 (def point-3d [42 26 -7])
@@ -1124,7 +1149,7 @@ maps are more flexible, but vectors as tuples make sence in some
   => (contains #{1 3 6 7 8}))
 
 "
-'set' works for anything seqable giving very useful idioms, where
+'set' works for anything seq-able giving very useful idioms, where
 sets are functions
 "
 
@@ -1170,7 +1195,7 @@ sets are functions
 "
 Maps as ad-hoc structs
 
-Maps a very flexible and alow data modeling even before the design
+Maps a very flexible and allow data modeling even before the design
  is nailed down.
 "
 (def playlist
@@ -1184,7 +1209,7 @@ Maps a very flexible and alow data modeling even before the design
 "
 the (:slot data) idiom
 "
-(fact "querying data agregates"
+(fact "querying data aggregates"
   (map :title playlist)
   => '("Elephant" "Helioself" "Stories from the City, Stories from the Sea" "Buildings and Grounds" "Zen Rodeo"))
 
@@ -1321,7 +1346,7 @@ or we can break transform our output: "
 
 (def v2 (conj v 1e6)) ; 'conj' a value to 'v'
 
-(fact "Clojures data structures are immuatable"
+(fact "Clojure's data structures are immutable"
   (count v)
   => 1000000
   (count v2)
@@ -1345,7 +1370,7 @@ and new list share the old's structure.
 (fact b => '(0 1 2 3))
 
 "
-poping the head of a list is also a constant time operation
+popping the head of a list is also a constant time operation
 (it just move a pointer):
 "
 (def c (rest a))
@@ -1387,15 +1412,15 @@ Free versioning.
   version2
   => {:info {:age 34}, :name "Chas"})
 "
-'update-in' updates the value identified by the vector arguement located
+'update-in' updates the value identified by the vector argument located
 in the nested structure by applying the given function and producing
 a new structure.
 "
 
 [[:subsection {:title "Transients --  page: 130"}]]
 "
-transient data structures are the opposite of pesistent.
-based on the notion if noone notices if a data structure is mutated, does
+transient data structures are the opposite of persistent.
+based on the notion if no-one notices if a data structure is mutated, does
 that mutation hurt anyone?
 "
 (def x (transient []))  ; a transient vector using a persistent
@@ -1411,7 +1436,7 @@ that mutation hurt anyone?
     => 1))
 
 "
-this is useful for implementing efficient functions that use datastructures.
+this is useful for implementing efficient functions that use data-structures.
 
 "
 (fact "example 'into'"
@@ -1454,7 +1479,12 @@ this is useful for implementing efficient functions that use datastructures.
   (transient-capable? '(1 2 3)) => false
   (transient-capable? #{1 2 3}) => true
   (transient-capable? {:a 1 :b 2}) => true
-  (transient-capable? [1 2 3]) => true)
+  (transient-capable? [1 2 ure and Java collections, Java maps, Java
+CharSequences (including Strings), Java Iterables, Arrays, nil (null), anything
+clojure.lang.Seq.
+
+"
+(facts "some examples:"3]) => true)
 
 "
 a persistent collection used as a transient is unaffected

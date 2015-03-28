@@ -51,6 +51,8 @@
 
 ;;(-> (iterate indexed-step glider)(nth 8) pprint)
 
+;; a version that avoids indices. This will help to get rid of manual iteration
+;; each 'loop' is replaced by a reduce over a range.
 (defn indexed-step2
   [board]
   (let [w (count board)
@@ -69,6 +71,7 @@
       board (range w))))
 
 
+;; nested reductions can be collapsed to make simpler code that is loopless:
 (defn indexed-step3
   [board]
   (let [w (count board)
@@ -83,6 +86,15 @@
            (assoc-in new-board [x y] new-liveness)))
       board (for [x (range h) y (range w)] [x y]))))
 
+;; using partition can get rid of one demension of indices:
+(partition 3 1 (range 5))
+;;=> '((0 1 2)(1 2 3)(2 3 4))
+
+;; partition with filled in neighbors:
+(partition 3 1 (concat [nil] (range 5) [nil]))
+;;=> '((nil 0 1) (0 1 2) (1 2 3) (2 3 4) (3 4 n))
+
+;; now use this in a window function: 
 (defn window
   "Returns a lazy sequence of 3-item windows centered
    around each item of coll, padded as necessary with
@@ -91,11 +103,15 @@
   ([pad coll]
    (partition 3 1 (concat [pad] coll [pad]))))
 
+
+;; using the window function to create transpositons:
 (defn cell-block 
   "Creates a sequences of 3x3 windows from a triple of 3 sequences."
   [[left mid right]]
   (window (map vector left mid right))) 
 
+;; calculating liveness using destructuring to separate a cell block into
+;; it's parts
 (defn liveness
   "Returns the liveness (nil or :on) of the center cell for
    the next step."  
@@ -107,6 +123,7 @@
       3 :on
       nil)))
 
+;; the new idexed-step function depending on index free helper functions:
 (defn- step-row
   "Yields the next state of the center row."
   [rows-triple]
@@ -116,6 +133,12 @@
   "Yields the next state of the board."
   [board]
   (vec (map step-row (window (repeat nil) board))))
+
+;; compare indexed-step the index-free:
+(- (nth (iterate indexed-step glider) 8)
+   (nth (iterate index-free-step glider) 8))
+;;=> true or should be:
+
 
 (defn step 
  "Yields the next state of the world"

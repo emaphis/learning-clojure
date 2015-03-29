@@ -139,13 +139,20 @@
    (nth (iterate index-free-step glider) 8))
 ;;=> true or should be:
 
-
+;; only the world of living cells is saved as state. we only have to count
+;; the neighboring living cells.
 (defn step 
  "Yields the next state of the world"
  [cells]
  (set (for [[loc n] (frequencies (mapcat neighbours cells))
             :when (or (= n 3) (and (= n 2) (cells loc)))]
         loc)))
+
+(->> (iterate step #{[2 0[ [2 1] [2 2] [1 2] [0 1]]]
+                     (drop 8)
+                     first
+                     (populate (empty-board 6 6))
+                     clojure.pprint/ppring}))
 
 (defn stepper 
   "Returns a step function for Life-like cell automata.
@@ -164,6 +171,16 @@
     [(+ dx x) (+ dy y)]))
 
 (def hex-step (stepper hex-neighbours #{2} #{3 4}))
+
+;= ; this configuration is an oscillator of period 4
+(hex-step #{[0 0] [1 1] [1 3] [0 4]})
+;= #{[1 -1] [2 2] [1 5]}
+(hex-step *1)
+;= #{[1 1] [2 4] [1 3] [2 0]}
+(hex-step *1)
+;= #{[1 -1] [0 2] [1 5]}
+(hex-step *1)
+;= #{[0 0] [1 1] [1 3] [0 4]}
 
 (defn rect-stepper 
   "Returns a step function for standard game of life on a (bounded) rectangular

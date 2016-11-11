@@ -876,3 +876,11 @@ failed-protagonist-names
 ;; => 1
 
 
+;; 4. Write a function, mapset, that works like map except the return value is a set:
+(defn mapset
+  "maps a function to a passed collection and returns the result as a set"
+  [f coll]
+  (into #{} (map f coll)))
+
+(mapset inc [1 1 2 2])
+;; => #{3 2}

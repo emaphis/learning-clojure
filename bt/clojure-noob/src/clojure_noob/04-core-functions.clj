@@ -221,3 +221,127 @@
 (some #(and (> (:critter %) 3) %) food-journal)
 ;; => {:month 3, :day 1, :human 4.2, :critter 3.3}
 
+
+;; sort and sort-by
+
+(sort [3 1 2])
+;; => (1 2 3)
+
+(sort-by count ["aaa" "c" "bb"])
+;; => ("c" "bb" "aaa")
+
+;; concat
+
+(concat [1 2] [3 4])
+;; => (1 2 3 4)
+
+
+;;; Lazy Seqs - efficiency
+
+(def vampire-database
+  {0 {:makes-blood-puns? false, :has-pulse? true  :name "McFishwich"}
+   1 {:makes-blood-puns? false, :has-pulse? true  :name "McMackson"}
+   2 {:makes-blood-puns? true,  :has-pulse? false :name "Damon Salvatore"}
+   3 {:makes-blood-puns? true,  :has-pulse? true  :name "Mickey Mouse"}})
+
+(defn vampire-related-details
+  [social-security-number]
+  (Thread/sleep 1000)
+  (get vampire-database social-security-number))
+
+(defn vampire?
+  [record]
+  (and (:makes-blood-puns? record)
+       (not (:has-pulse? record))
+       record))
+
+(defn identify-vampire
+  [social-security-numbers]
+  (first (filter vampire?
+                 (map vampire-related-details social-security-numbers))))
+
+;; Timing a call:
+(time (vampire-related-details 0))
+;; => "Elapsed time: 1000.309815 msecs"
+;; => {:makes-blood-puns? false, :has-pulse? true, :name "McFishwich"}
+
+;; map is lazy so it returns almost instantly
+(time (def mapped-details (map vampire-related-details (range 0 100000))))
+;; => "Elapsed time: 0.230798 msecs"
+;; => #'clojure-noob.04-core-functions/mapped-details
+
+;; realized in 32 unit chunks
+(time (first mapped-details))
+;; => "Elapsed time: 32005.408109 msecs"
+;; => {:makes-blood-puns? false, :has-pulse? true, :name "McFishwich"}
+
+
+;; now almost instantaneous
+(time (first mapped-details))
+;; "Elapsed time: 0.273958 msecs"
+;; => {:makes-blood-puns? false, :has-pulse? true, :name "McFishwich"}
+
+;; now identify the suspect:
+(time (identify-vampire (range 0 1000000)))
+;; =>"Elapsed time: 32006.990619 msecs"
+;; => {:makes-blood-puns? true, :has-pulse? false, :name "Damon Salvatore"}
+
+
+;;; Infinite Sequences
+
+;; repeat creates an infinite sequence
+(concat (take 8 (repeat "na")) ["batman!"])
+;; => ("na" "na" "na" "na" "na" "na" "na" "na" "batman!")
+
+(take 3 (repeatedly (fn [] (rand-int 10))))
+;; => (7 4 9)
+;; => (3 2 8)
+
+;; custom definition
+(defn even-numbers
+  ([] (even-numbers 0))
+  ([n] (cons n (lazy-seq (even-numbers (+ n 2))))))
+
+(take 10 (even-numbers))
+;; => (0 2 4 6 8 10 12 14 16 18)
+
+;; cons returns a new list
+(cons 0 '(2 4 6))
+;; => (0 2 4 6)
+
+
+;;; The collection Abstraction: into, conj
+
+;; the seq abstractions is about the whole data collection
+;; the collection abstraction is about individual items
+
+;; for instance count, empty?, and every? about the whole
+(empty? [])
+;; => true
+
+(empty? ["no!"])
+;; => false
+
+;; into
+;; convert a seq into a different value
+
+(map identity {:sunlight-reaction "Glitter!"})
+;; => ([:sunlight-reaction "Glitter!"])
+
+(into {} (map identity {:sunlight-reaction "Glitter!"}))
+;; => {:sunlight-reaction "Glitter!"}
+
+
+(map identity [:garlic :sesame-oil :firied-eggs])
+;; => (:garlic :sesame-oil :firied-eggs)
+
+(into [] (map identity [:garlic :sesame-oil :firied-eggs]))
+;; => [:garlic :sesame-oil :firied-eggs]
+
+
+(map identity [:garlic-clove :garlic-clove])
+;; => (:garlic-clove :garlic-clove)
+
+(into #{} (map identity [:garlic-clove :garlic-clove]))
+;; => #{:garlic-clove}
+

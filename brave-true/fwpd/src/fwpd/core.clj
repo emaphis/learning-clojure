@@ -5,12 +5,14 @@
 
 (def filename "../fwpd/suspects.csv")
 
+(slurp filename)
+
 ;; Later on we're going to be converting each row in the CSV into a
 ;; map, like {:name "Edward Cullen" :glitter-index 10}.
 ;; Since CSV can't store Clojure keywords, we need to associate the
 ;; textual header from the CSV with the correct keyword.
-(def headers->keywords {"Name" :name
-                        "Glitter Index" :glitter-index})
+
+(def vamp-keys [:name :glitter-index])
 
 (defn str->int
   [str]
@@ -21,37 +23,56 @@
 (def conversions {:name identity
                   :glitter-index str->int})
 
+(defn convert
+  [vamp-key value]
+  ((get conversions vamp-key) value))
+
+
+;; test convert
+;(convert :name "Henry")
+;; => "Henry"
+;(convert :glitter-index "3")
+;; => 3
+
+
 (defn parse
   "convert a csv into rows of columns"
   [string]
   (map #(s/split % #",")
        (s/split string #"\n")))
 
+;; test parse
+;(parse (slurp filename))
+;; => (["Edward Cullen" "10"] ["Bella Swan" "0"] ["Charlie Swan" "0"]
+;;     ["Jacob Black" "3"] ["Carlisle Cullen" "6"])
+
+
 (defn mapify
-  "Retrun a seq of maps like {:name \"Edward Cullen\" :glitter-indenx 10}"
+  "Return a seq of maps like {:name \"Edward Cullen\" :glitter-indenx 10}"
   [rows]
-  (let [;; headers becomes the seq (:anem :glitter-index)
-        headers (map #(get headers->keywords %) (first rows))
-        ;; unmapped-rows becomes the seq
-        ;; (["Edward Cullen" "10"] ["Bella Swan" "0] ...)
-        unmapped-rows (rest rows)]
-    ;; Now let's return a seq of {:name "X" :glitter-index 10}
-    (map (fn [unmapped-row]
-           ;; We're going to use map to associate each header wit its
-           ;; column. Since map returns a seq, we use "into" to convert
-           ;; it into a map.
-           (into {}
-                 ;; notice we're passing multiple collection to map
-                 (map (fn [header column]
-                        ;; associate the header with the converted column
-                        [header ((get conversions header) column)])
-                      headers
-                      unmapped-row)))
-         unmapped-rows)))
+  (map (fn [unmapped-row]
+         (reduce (fn [row-map [vamp-key value]]
+                   (assoc row-map vamp-key (convert vamp-key value)))
+                 {}
+                 (map vector vamp-keys unmapped-row)))
+       rows))
+
+;; test mapify
+;;(first (mapify (parse (slurp filename))))
+;; => {:name "Edward Cullen", :glitter-index 10}
+
 
 (defn glitter-filter
   [minimum-glitter records]
   (filter #(>= (:glitter-index %) minimum-glitter) records))
+
+;; test
+(glitter-filter 3 (mapify (parse (slurp filename))))
+;; => ({:name "Edward Cullen", :glitter-index 10}
+;;     {:name "Jacob Black", :glitter-index 3}
+;;     {:name "Carlisle Cullen", :glitter-index 6})
+
+
 
 (defn list-of-names
   "return a list of names given a list of suspect maps"

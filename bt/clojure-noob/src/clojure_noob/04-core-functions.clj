@@ -345,3 +345,149 @@
 (into #{} (map identity [:garlic-clove :garlic-clove]))
 ;; => #{:garlic-clove}
 
+;; into structures don't have to be empty
+
+(into {:favorite-emotion "gloomy"}  [[:sunlight-reaction "Glitter!"]])
+;; => {:favorite-emotion "gloomy", :sunlight-reaction "Glitter!"}
+
+(into ["cherry"] '("pine" "spruce"))
+;; => ["cherry" "pine" "spruce"]
+
+(into {:favorite-animal "kitty"} {:least-favorite-smell "dog"
+                                  :relationship-with-teenager "creepy"})
+;; => {:favorite-animal "kitty",
+;;     :least-favorite-smell "dog",
+;;     :relationship-with-teenager "creepy"}
+
+
+;; conj
+(conj [0] [1]) ; not like into!
+;; => [0 [1]]
+
+(into [0] [1])
+;; => [0 1]
+
+(conj [0] 1)
+;; => [0 1]
+
+;; add more than one item
+(conj [0] 1 2 3 4)
+;; => [0 1 2 3 4]
+
+(conj {:time "midnight"} [:place "ye olde cemetarium"])
+;; => {:time "midnight", :place "ye olde cemetarium"}
+
+;; conj and into are similar:
+(defn my-conj
+  [target & additons]
+  (into target additons))
+
+(my-conj [0] 1 2 3)
+;; => [0 1 2 3]
+
+
+;;; Function Functions
+
+;; apply
+
+;; max takes multiple arguments
+(max 0 1 2)
+;; => 2
+
+;; applied to a collection
+(max [0 1 2])
+;; => [0 1 2]
+
+;; using apply to 'explode' a collection
+(apply max [0 1 2])
+;; => 2
+
+;; into defined in terms of conj
+(defn my-into
+  [target additions]
+  (apply conj target additions))
+
+(my-into [0] [1 2 3])
+;; => [0 1 2 3]
+
+
+;;; partial
+
+(def add10 (partial + 10))
+
+(add10 3)
+;; => 13
+(add10 5)
+;; => 15
+
+(def add-missing-elements
+  (partial conj ["water" "earth" "air"]))
+
+
+(add-missing-elements "unobtainium" "adamantium")
+;; => ["water" "earth" "air" "unobtainium" "adamantium"]
+
+;; home brewed partial
+
+(defn my-partial
+  [partialized-fn & args]
+  (fn [& more-args]
+    (apply partialized-fn (into args more-args))))
+
+(def add20 (my-partial + 20))
+
+(add20 3)
+;; => 23
+
+;; the returned function
+(fn [& more-args]
+  (apply + (into [20] more-args)))
+
+
+;; a logger using partial
+(defn lousy-logger
+  [log-level message]
+  (condp = log-level
+        :warn (clojure.string/lower-case message)
+        :emergency (clojure.string/upper-case message)))
+
+;; use partial to  create specialized logger
+(def warn (partial lousy-logger :warn))
+
+(warn "Red light ahead")
+;; => "red light ahead"
+
+;; (lousy-logger :warn "Red light ahead")
+
+
+;; complement
+
+(defn identify-humans
+  [social-secutity-numbers]
+  (filter #(not (vampire?))
+          (map vampire-related-details social-secutity-numbers)))
+
+
+;; using complement
+(def not-vampire? (complement vampire?))
+
+(defn identify-humans
+  [social-security-numbers]
+  (filter not-vampire?
+          (map vampire-related-details social-security-numbers)))
+
+
+;; home brewed complement
+(defn my-complement
+  [fun]
+  (fn [& args]
+    (not (apply fun args))))
+
+(def my-pos? (my-complement neg?))
+
+(my-pos? 1)
+;; => true
+
+(my-pos? -1)
+;; => false
+

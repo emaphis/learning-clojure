@@ -16,6 +16,12 @@
   (fact (take 3 tri) => '(1 3 6))
   (fact (take 5 tri) => '(1 3 6 10 15)))
 
+(deftest tri-test
+  (is (= '(1) (take 1 tri)))
+  (is (= '(1 3 6) (take 3 tri)))
+  (is (= '(1 3 6 10 15))) (take 5 tri))
+
+
 (fact "testing 'triangular?"
   (triangular? 5) => falsey
   (triangular? 6) => truthy)
